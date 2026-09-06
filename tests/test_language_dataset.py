@@ -11,9 +11,29 @@ from src.utils.device import get_device
 class TestLanguageDataset(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
+        import json
+        import shutil
+        cls.temp_dir = "tests/temp_data_dataset"
+        os.makedirs(cls.temp_dir, exist_ok=True)
+
         cls.tokenizer = CharacterTokenizer()
-        cls.tokenizer.load("data/processed/tokenizer.json")
-        cls.dataset = LanguageDataset(cls.tokenizer, data_dir="data/processed", context_length=16)
+        cls.tokenizer.char_to_id = {str(i): i for i in range(10)}
+        cls.tokenizer.id_to_char = {i: str(i) for i in range(10)}
+        cls.tokenizer.vocab_size = 10
+
+        dummy_text = "0123456789" * 20
+        with open(os.path.join(cls.temp_dir, "train.jsonl"), "w") as f:
+            f.write(json.dumps({"text": dummy_text}) + "\n")
+        with open(os.path.join(cls.temp_dir, "valid.jsonl"), "w") as f:
+            f.write(json.dumps({"text": dummy_text}) + "\n")
+
+        cls.dataset = LanguageDataset(cls.tokenizer, data_dir=cls.temp_dir, context_length=16)
+
+    @classmethod
+    def tearDownClass(cls):
+        import shutil
+        if os.path.exists(cls.temp_dir):
+            shutil.rmtree(cls.temp_dir)
 
     def test_dimensions(self):
         """1. X and Y have the expected dimensions. 5. Batch size correct. 6. Context length correct."""

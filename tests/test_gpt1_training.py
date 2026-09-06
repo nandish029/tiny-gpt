@@ -11,11 +11,12 @@ from src.tokenizer.character import CharacterTokenizer
 from src.data.language_dataset import LanguageDataset
 from src.training.optimizer import create_optimizer
 from src.training.step import train_step, validation_step
+from src.utils.device import get_device
 
 class TestGPT1Training(unittest.TestCase):
     def setUp(self):
         torch.manual_seed(42)
-        self.device = torch.device('cpu')
+        self.device = get_device()
         
         # We need a dummy dataset for testing so we don't depend on actual data
         self.temp_dir = "tests/temp_data"
