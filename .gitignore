@@ -1,0 +1,42 @@
+# Python cache files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# virtual environments
+venv/
+env/
+.env
+
+# IDE/editor and OS temporary files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+*.swp
+*~
+
+# Hugging Face caches
+.huggingface/
+.cache/
+
+# model checkpoints
+*.pt
+*.pth
+*.ckpt
+
+# datasets and generated datasets
+data/raw/
+data/processed/
+data/test_processed_*/
+tests/temp_data/
+
+# temporary experiment artifacts
+scratch/
+
+# logs
+*.log
+
+# Allow tracking of specific experiment folders if needed, but not models
+!experiments/gpt1/results.md
+!experiments/gpt1/FROZEN.md

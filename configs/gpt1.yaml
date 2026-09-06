@@ -1,0 +1,15 @@
+model:
+  # placeholders for model configuration
+  placeholder: true
+
+training:
+  # placeholders for training configuration
+  placeholder: true
+
+data:
+  # placeholders for data configuration
+  placeholder: true
+
+device:
+  # placeholders for device configuration
+  placeholder: true
