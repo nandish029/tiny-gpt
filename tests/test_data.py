@@ -4,9 +4,16 @@ import sys
 import shutil
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from src.data.prepare import prepare_data
 from src.data.dataset import TinyStoriesDataset
 
+try:
+    import datasets
+    from src.data.prepare import prepare_data
+    DATASETS_AVAILABLE = True
+except ImportError:
+    DATASETS_AVAILABLE = False
+
+@unittest.skipIf(not DATASETS_AVAILABLE, "datasets library not installed")
 class TestDataPipeline(unittest.TestCase):
     def test_pipeline(self):
         test_dir1 = "data/test_processed_1"
