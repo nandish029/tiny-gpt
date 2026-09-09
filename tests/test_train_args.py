@@ -14,9 +14,10 @@ class TestTrainCLIArgs(unittest.TestCase):
     @patch('scripts.train_gpt1.resolve_device')
     @patch('scripts.train_gpt1.torch')
     @patch('scripts.train_gpt1.os.makedirs')
+    @patch('scripts.train_gpt1.validation_step')
     @patch('scripts.train_gpt1.train_step')
     @patch('builtins.open')
-    def test_device_argument_parsing(self, mock_open, mock_train_step, mock_makedirs, mock_torch, mock_resolve_device, mock_gpt, mock_dataset, mock_tokenizer, mock_load_config):
+    def test_device_argument_parsing(self, mock_open, mock_train_step, mock_val_step, mock_makedirs, mock_torch, mock_resolve_device, mock_optimizer, mock_gpt, mock_dataset, mock_tokenizer, mock_load_config):
         """Verifies that --device is correctly parsed and passed to resolve_device."""
         
         # We need to mock sys.exit to prevent the script from exiting on argparse errors
@@ -32,12 +33,24 @@ class TestTrainCLIArgs(unittest.TestCase):
         mock_tokenizer_instance.vocab_size = 89
         
         mock_dataset_instance = mock_dataset.return_value
-        mock_dataset_instance.get_batch.return_value = (mock_torch.Tensor(), mock_torch.Tensor())
+        from unittest.mock import MagicMock
+        x_mock = MagicMock()
+        x_mock.shape = (16, 64)
+        y_mock = MagicMock()
+        y_mock.shape = (16, 64)
+        mock_dataset_instance.get_batch.return_value = (x_mock, y_mock)
         
         mock_gpt_instance = mock_gpt.return_value
-        mock_gpt_instance.parameters.return_value = [mock_torch.Tensor()]
+        mock_gpt_instance.parameters.return_value = [MagicMock()]
+        mock_gpt_instance.to.return_value = mock_gpt_instance
+        logits_mock = MagicMock()
+        logits_mock.shape = (16, 64, 89)
+        mock_gpt_instance.return_value = logits_mock
         
-        mock_train_step.return_value = mock_torch.Tensor([1.0])
+        mock_train_step.return_value = MagicMock()
+        mock_train_step.return_value.item.return_value = 1.0
+        mock_val_step.return_value = MagicMock()
+        mock_val_step.return_value.item.return_value = 1.0
         mock_torch.isfinite.return_value = True
         
         # Test default (auto)
