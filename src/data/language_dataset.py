@@ -10,7 +10,7 @@ class LanguageDataset:
         self.device = get_device()
         
         self.train_data = self._load_and_encode("train", data_dir)
-        self.valid_data = self._load_and_encode("valid", data_dir)
+        self.val_data = self._load_and_encode("val", data_dir)
         
     def _load_and_encode(self, split, data_dir):
         """Loads dataset split and encodes it into a 1D tensor of IDs."""
@@ -33,8 +33,8 @@ class LanguageDataset:
         """
         if split == "train":
             data = self.train_data
-        elif split == "valid":
-            data = self.valid_data
+        elif split == "val":
+            data = self.val_data
         else:
             raise ValueError(f"Invalid split: {split}")
             

@@ -24,7 +24,7 @@ class TestLanguageDataset(unittest.TestCase):
         dummy_text = "0123456789" * 20
         with open(os.path.join(cls.temp_dir, "train.jsonl"), "w") as f:
             f.write(json.dumps({"text": dummy_text}) + "\n")
-        with open(os.path.join(cls.temp_dir, "valid.jsonl"), "w") as f:
+        with open(os.path.join(cls.temp_dir, "val.jsonl"), "w") as f:
             f.write(json.dumps({"text": dummy_text}) + "\n")
 
         cls.dataset = LanguageDataset(cls.tokenizer, data_dir=cls.temp_dir, context_length=16)
@@ -43,7 +43,7 @@ class TestLanguageDataset(unittest.TestCase):
         
     def test_data_types_and_values(self):
         """2. X and Y contain integer token IDs. 3. Both contain valid vocabulary IDs."""
-        x, y = self.dataset.get_batch("valid", batch_size=2)
+        x, y = self.dataset.get_batch("val", batch_size=2)
         self.assertEqual(x.dtype, torch.long)
         self.assertEqual(y.dtype, torch.long)
         
@@ -75,7 +75,7 @@ class TestLanguageDataset(unittest.TestCase):
         
     def test_data_separation(self):
         """7. Training and validation data remain separate."""
-        self.assertNotEqual(id(self.dataset.train_data), id(self.dataset.valid_data))
+        self.assertNotEqual(id(self.dataset.train_data), id(self.dataset.val_data))
         
     def test_device_placement(self):
         """8 & 9. Batches can be created on CPU (and CUDA if available)."""

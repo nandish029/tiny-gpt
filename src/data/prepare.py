@@ -39,29 +39,40 @@ def prepare_data(num_samples=5000, seed=42, data_dir="data/processed"):
         except StopIteration:
             break
             
+    # Clean up iterator and dataset explicitly to avoid PyGILState_Release crash on shutdown
+    del item
+    del iterator
+    del ds
+    import gc
+    gc.collect()
+    
     # Deterministic shuffle
     random.shuffle(processed_data)
     
     # Train / Validation split (90% / 10%)
     split_idx = int(len(processed_data) * 0.9)
     train_data = processed_data[:split_idx]
-    valid_data = processed_data[split_idx:]
+    val_data = processed_data[split_idx:]
     
     # Save processed data
     os.makedirs(data_dir, exist_ok=True)
     
     train_path = os.path.join(data_dir, "train.jsonl")
-    valid_path = os.path.join(data_dir, "valid.jsonl")
+    val_path = os.path.join(data_dir, "val.jsonl")
     
     with open(train_path, "w", encoding="utf-8") as f:
         for item in train_data:
             f.write(json.dumps(item) + "\n")
+        f.flush()
+        os.fsync(f.fileno())
             
-    with open(valid_path, "w", encoding="utf-8") as f:
-        for item in valid_data:
+    with open(val_path, "w", encoding="utf-8") as f:
+        for item in val_data:
             f.write(json.dumps(item) + "\n")
+        f.flush()
+        os.fsync(f.fileno())
             
-    print(f"Saved {len(train_data)} train samples and {len(valid_data)} valid samples to {data_dir}.")
+    print(f"Saved {len(train_data)} train samples and {len(val_data)} val samples to {data_dir}.")
 
 if __name__ == "__main__":
     import argparse

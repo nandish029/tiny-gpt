@@ -71,7 +71,7 @@ class TestGPT1Evaluation(unittest.TestCase):
         dataset = LanguageDataset(tokenizer, context_length=checkpoint['config']['max_context_length'])
         
         # Validation
-        x, y = dataset.get_batch("valid", batch_size=4)
+        x, y = dataset.get_batch("val", batch_size=4)
         val_loss = validation_step(model, x, y)
         
         # 6. validation produces finite loss

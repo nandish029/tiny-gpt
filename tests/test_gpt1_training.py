@@ -34,7 +34,7 @@ class TestGPT1Training(unittest.TestCase):
         dummy_text = "0123456789" * 20
         with open(os.path.join(self.temp_dir, "train.jsonl"), "w") as f:
             f.write(json.dumps({"text": dummy_text}) + "\n")
-        with open(os.path.join(self.temp_dir, "valid.jsonl"), "w") as f:
+        with open(os.path.join(self.temp_dir, "val.jsonl"), "w") as f:
             f.write(json.dumps({"text": dummy_text}) + "\n")
             
     def tearDown(self):
@@ -86,7 +86,7 @@ class TestGPT1Training(unittest.TestCase):
         param_after = model.lm_head.linear.weight
         self.assertFalse(torch.equal(param_before, param_after))
         
-        val_x, val_y = dataset.get_batch("valid", batch_size=2)
+        val_x, val_y = dataset.get_batch("val", batch_size=2)
         val_loss = validation_step(model, val_x, val_y)
         self.assertTrue(torch.isfinite(val_loss))
 

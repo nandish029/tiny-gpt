@@ -25,7 +25,7 @@ class TestDataPipeline(unittest.TestCase):
         
         # Check files exist
         self.assertTrue(os.path.exists(os.path.join(test_dir1, "train.jsonl")))
-        self.assertTrue(os.path.exists(os.path.join(test_dir1, "valid.jsonl")))
+        self.assertTrue(os.path.exists(os.path.join(test_dir1, "val.jsonl")))
         
         # 6. Dataset loader successfully loads the processed data
         train_ds = TinyStoriesDataset(split="train", data_dir=test_dir1)

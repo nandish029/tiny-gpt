@@ -150,15 +150,15 @@ class TestTrainValidationSeparation(unittest.TestCase):
         # Train tokens are all < 10
         dataset.train_data = torch.randint(0, 10, (100,), dtype=torch.long)
         # Valid tokens are all >= 10
-        dataset.valid_data = torch.randint(10, 20, (100,), dtype=torch.long)
+        dataset.val_data = torch.randint(10, 20, (100,), dtype=torch.long)
         
         x_train, y_train = dataset.get_batch("train", batch_size=10)
         self.assertTrue((x_train < 10).all())
         self.assertTrue((y_train < 10).all())
         
-        x_valid, y_valid = dataset.get_batch("valid", batch_size=10)
-        self.assertTrue((x_valid >= 10).all())
-        self.assertTrue((y_valid >= 10).all())
+        x_val, y_val = dataset.get_batch("val", batch_size=10)
+        self.assertTrue((x_val >= 10).all())
+        self.assertTrue((y_val >= 10).all())
 
 # 6. TEST DEVICE BEHAVIOR
 class TestDeviceBehavior(unittest.TestCase):
