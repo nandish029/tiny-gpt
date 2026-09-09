@@ -2,34 +2,52 @@ import torch
 import os
 import sys
 import time
+import argparse
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from src.tokenizer.character import CharacterTokenizer
 from src.data.language_dataset import LanguageDataset
 from src.model.gpt import GPT
 from src.utils.device import get_device
+from src.utils.config import load_config
 from src.training.optimizer import create_optimizer
 from src.training.step import train_step, validation_step
 
 def main():
-    torch.manual_seed(42)
+    parser = argparse.ArgumentParser(description="Train GPT-1 Baseline")
+    parser.add_argument("--config", type=str, default="configs/gpt1.yaml")
+    parser.add_argument("--tokenizer", type=str, default="data/processed/tokenizer.json")
+    parser.add_argument("--data_dir", type=str, default="data/processed")
+    parser.add_argument("--out_dir", type=str, default="checkpoints/gpt1")
+    parser.add_argument("--results_path", type=str, default="experiments/gpt1/results.md")
+    parser.add_argument("--steps", type=int, default=None, help="Override training steps (e.g. for smoke testing)")
+    args = parser.parse_args()
+
+    # Load configuration
+    cfg = load_config(args.config)
+    model_cfg = cfg['model']
+    train_cfg = cfg.get('training', {})
+
+    seed = train_cfg.get('seed', 42)
+    torch.manual_seed(seed)
     device = get_device()
     print(f"Using device: {device}")
     
     # Load tokenizer
     tokenizer = CharacterTokenizer()
-    tokenizer.load("data/processed/tokenizer.json")
+    tokenizer.load(args.tokenizer)
     
     vocab_size = tokenizer.vocab_size
-    embedding_dim = 32
-    max_context_length = 64
-    num_heads = 4
-    feed_forward_dim = 128
-    num_layers = 2
+    # Fallback to defaults if missing from config for safety, but expect them from config
+    embedding_dim = model_cfg.get('embedding_dim', 32)
+    max_context_length = model_cfg.get('max_context_length', 64)
+    num_heads = model_cfg.get('num_heads', 4)
+    feed_forward_dim = model_cfg.get('feed_forward_dim', 128)
+    num_layers = model_cfg.get('num_layers', 2)
     
     print(f"GPT-1 Config: V={vocab_size}, D={embedding_dim}, L={max_context_length}, H={num_heads}, FF={feed_forward_dim}, Layers={num_layers}")
     
-    dataset = LanguageDataset(tokenizer, data_dir="data/processed", context_length=max_context_length)
+    dataset = LanguageDataset(tokenizer, data_dir=args.data_dir, context_length=max_context_length)
     
     model = GPT(
         vocab_size=vocab_size,
@@ -43,9 +61,13 @@ def main():
     param_count = sum(p.numel() for p in model.parameters() if p.requires_grad)
     print(f"Total trainable parameters: {param_count}")
     
+    # Training configurations
+    batch_size = train_cfg.get('batch_size', 16)
+    learning_rate = float(train_cfg.get('learning_rate', 3e-4))
+    train_steps = args.steps if args.steps is not None else train_cfg.get('train_steps', 1000)
+    val_interval = train_cfg.get('val_interval', 100)
+    
     # Startup sanity check
-    # Force batch size 16 to be safe on memory constraints
-    batch_size = 16
     print(f"Performing startup sanity check with batch_size={batch_size}...")
     x, y = dataset.get_batch(split="train", batch_size=batch_size)
     assert x.shape == (batch_size, max_context_length), f"Expected {(batch_size, max_context_length)}, got {x.shape}"
@@ -58,16 +80,12 @@ def main():
         assert logits.shape == (batch_size, max_context_length, vocab_size), f"Expected {(batch_size, max_context_length, vocab_size)}, got {logits.shape}"
     
     # Initial loss check and param update check
-    optimizer = create_optimizer(model, learning_rate=3e-4)
+    optimizer = create_optimizer(model, learning_rate=learning_rate)
     loss = train_step(model, optimizer, x, y)
     assert torch.isfinite(loss), f"Initial loss is not finite: {loss.item()}"
     print("Sanity check passed!")
     
-    # Actual training
-    train_steps = 1000
-    val_interval = 100
-    
-    print("Starting training...")
+    print(f"Starting training for {train_steps} steps...")
     start_time = time.time()
     
     min_val_loss = float('inf')
@@ -75,8 +93,8 @@ def main():
     final_val_loss = 0.0
     initial_loss = loss.item()
     
-    os.makedirs("experiments/gpt1", exist_ok=True)
-    with open("experiments/gpt1/results.md", "w") as f:
+    os.makedirs(os.path.dirname(args.results_path), exist_ok=True)
+    with open(args.results_path, "w") as f:
         f.write("# GPT-1 Baseline\n\n")
         f.write("## Configuration\n")
         f.write(f"- tokenizer: CharacterTokenizer\n")
@@ -87,8 +105,8 @@ def main():
         f.write(f"- feed-forward dimension: {feed_forward_dim}\n")
         f.write(f"- layers: {num_layers}\n")
         f.write(f"- batch size: {batch_size}\n")
-        f.write(f"- learning rate: 3e-4\n")
-        f.write(f"- seed: 42\n\n")
+        f.write(f"- learning rate: {learning_rate}\n")
+        f.write(f"- seed: {seed}\n\n")
         
         f.write("## Training\n")
         f.write(f"- dataset: TinyStories\n")
@@ -105,7 +123,7 @@ def main():
             x, y = dataset.get_batch(split="train", batch_size=batch_size)
             loss = train_step(model, optimizer, x, y)
             
-            if step % val_interval == 0:
+            if step % val_interval == 0 or step == train_steps:
                 val_x, val_y = dataset.get_batch(split="valid", batch_size=batch_size)
                 val_loss = validation_step(model, val_x, val_y)
                 
@@ -123,8 +141,8 @@ def main():
     elapsed = time.time() - start_time
     print(f"Training completed in {elapsed:.2f}s")
     
-    os.makedirs("checkpoints/gpt1", exist_ok=True)
-    checkpoint_path = "checkpoints/gpt1/gpt1_baseline.pt"
+    os.makedirs(args.out_dir, exist_ok=True)
+    checkpoint_path = os.path.join(args.out_dir, "gpt1_baseline.pt")
     torch.save({
         'model_state_dict': model.state_dict(),
         'optimizer_state_dict': optimizer.state_dict(),
@@ -138,8 +156,9 @@ def main():
             'num_layers': num_layers
         }
     }, checkpoint_path)
+    print(f"Checkpoint saved to {checkpoint_path}")
     
-    with open("experiments/gpt1/results.md", "a") as f:
+    with open(args.results_path, "a") as f:
         f.write(f"\n- initial loss: {initial_loss:.4f}\n")
         f.write(f"- final training loss: {final_train_loss:.4f}\n")
         f.write(f"- final validation loss: {final_val_loss:.4f}\n")
@@ -150,7 +169,7 @@ def main():
         f.write(f"- final step: {train_steps}\n\n")
         
         f.write("## Observations\n")
-        f.write("The loss decreased meaningfully over the 1000 steps. The model successfully ran end-to-end and saved a baseline checkpoint.\n")
+        f.write("The loss decreased meaningfully over the training. The model successfully ran end-to-end and saved a baseline checkpoint.\n")
 
 if __name__ == "__main__":
     main()

@@ -5,3 +5,9 @@ model:
   num_heads: 4
   feed_forward_dim: 128
   num_layers: 2
+training:
+  batch_size: 16
+  learning_rate: 3.0e-4
+  train_steps: 1000
+  val_interval: 100
+  seed: 42

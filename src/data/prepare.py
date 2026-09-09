@@ -64,4 +64,11 @@ def prepare_data(num_samples=5000, seed=42, data_dir="data/processed"):
     print(f"Saved {len(train_data)} train samples and {len(valid_data)} valid samples to {data_dir}.")
 
 if __name__ == "__main__":
-    prepare_data(num_samples=5000)
+    import argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--num_samples", type=int, default=5000)
+    parser.add_argument("--seed", type=int, default=42)
+    parser.add_argument("--data_dir", type=str, default="data/processed")
+    args = parser.parse_args()
+    
+    prepare_data(num_samples=args.num_samples, seed=args.seed, data_dir=args.data_dir)

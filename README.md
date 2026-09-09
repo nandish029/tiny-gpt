@@ -61,3 +61,15 @@ To use the `--gpus all` flag, the host machine must have:
 2. An appropriate NVIDIA display driver installed on the host OS.
 3. The NVIDIA Container Toolkit installed (or Docker Desktop with WSL2 GPU support enabled).
 The Docker image itself provides PyTorch and the CUDA runtime, but it cannot provide the hardware or the low-level host driver.
+
+## Reproducing GPT-1
+
+The GPT-1 baseline can be fully reproduced deterministically from a fresh clone. This ensures the model training, tokenizer building, and data generation all work from scratch without relying on existing tracked artifacts.
+
+To verify the integrity of the frozen baseline and test the reproducibility pipeline, run:
+
+```bash
+python scripts/validate_reproducibility.py
+```
+
+This script will verify that the frozen model checkpoint is intact, then create a temporary `scratch/reproduce` environment to prepare the dataset, build the tokenizer, run a 5-step smoke test of the training script, and evaluate the resulting checkpoint.
