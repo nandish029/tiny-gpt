@@ -172,6 +172,80 @@ class TestCLI(unittest.TestCase):
         with open(ckpt_path, "rb") as f:
             new_hash = hashlib.md5(f.read()).hexdigest()
         self.assertEqual(original_hash, new_hash)
+    @patch('scripts.chat.resolve_device')
+    @patch('scripts.chat.load_config')
+    @patch('scripts.chat.torch.load')
+    @patch('scripts.chat.GPT')
+    @patch('scripts.chat.CharacterTokenizer')
+    @patch('scripts.chat.generate')
+    def test_interactive_immediate_eof_exits_with_error(self, mock_generate, mock_tokenizer_class, mock_gpt_class, mock_torch_load, mock_load_config, mock_resolve_device):
+        """Simulates docker run without -i: input() raises EOFError immediately."""
+        mock_resolve_device.return_value = torch.device('cpu')
+        mock_load_config.return_value = {'model': {}}
+        mock_torch_load.return_value = {'config': {}, 'model_state_dict': {}}
+
+        mock_model = MagicMock()
+        mock_model.to.return_value = mock_model
+        mock_gpt_class.return_value = mock_model
+
+        # input() raises EOFError on first call (no stdin attached)
+        with patch('builtins.input', side_effect=EOFError):
+            with patch('scripts.chat.os.path.exists', return_value=True):
+                with patch('sys.argv', ['chat.py', '--checkpoint', 'dummy.pt', '--tokenizer', 'dummy.json', '--config', 'dummy.yaml']):
+                    with self.assertRaises(SystemExit) as cm:
+                        main()
+                    self.assertEqual(cm.exception.code, 1)
+
+        # Generate should NOT have been called
+        mock_generate.assert_not_called()
+
+    @patch('scripts.chat.resolve_device')
+    @patch('scripts.chat.load_config')
+    @patch('scripts.chat.torch.load')
+    @patch('scripts.chat.GPT')
+    @patch('scripts.chat.CharacterTokenizer')
+    @patch('scripts.chat.generate')
+    def test_interactive_mid_session_eof_exits_gracefully(self, mock_generate, mock_tokenizer_class, mock_gpt_class, mock_torch_load, mock_load_config, mock_resolve_device):
+        """Mid-session Ctrl+D (EOF after some successful input) exits gracefully."""
+        mock_resolve_device.return_value = torch.device('cpu')
+        mock_load_config.return_value = {'model': {}}
+        mock_torch_load.return_value = {'config': {}, 'model_state_dict': {}}
+
+        mock_model = MagicMock()
+        mock_model.to.return_value = mock_model
+        mock_gpt_class.return_value = mock_model
+
+        # First call succeeds, second raises EOF
+        with patch('builtins.input', side_effect=['hello', EOFError]):
+            with patch('scripts.chat.os.path.exists', return_value=True):
+                with patch('sys.argv', ['chat.py', '--checkpoint', 'dummy.pt', '--tokenizer', 'dummy.json', '--config', 'dummy.yaml']):
+                    main()  # Should NOT raise SystemExit
+
+        mock_generate.assert_called_once()
+
+    @patch('scripts.chat.resolve_device')
+    @patch('scripts.chat.load_config')
+    @patch('scripts.chat.torch.load')
+    @patch('scripts.chat.GPT')
+    @patch('scripts.chat.CharacterTokenizer')
+    @patch('scripts.chat.generate')
+    def test_interactive_multiple_prompts_then_exit(self, mock_generate, mock_tokenizer_class, mock_gpt_class, mock_torch_load, mock_load_config, mock_resolve_device):
+        """Interactive mode accepts multiple prompts then exits on 'exit'."""
+        mock_resolve_device.return_value = torch.device('cpu')
+        mock_load_config.return_value = {'model': {}}
+        mock_torch_load.return_value = {'config': {}, 'model_state_dict': {}}
+
+        mock_model = MagicMock()
+        mock_model.to.return_value = mock_model
+        mock_gpt_class.return_value = mock_model
+
+        with patch('builtins.input', side_effect=['first', 'second', '', 'exit']):
+            with patch('scripts.chat.os.path.exists', return_value=True):
+                with patch('sys.argv', ['chat.py', '--checkpoint', 'dummy.pt', '--tokenizer', 'dummy.json', '--config', 'dummy.yaml']):
+                    main()
+
+        # '' (empty) should be skipped, so generate called for 'first' and 'second'
+        self.assertEqual(mock_generate.call_count, 2)
 
 if __name__ == "__main__":
     unittest.main()

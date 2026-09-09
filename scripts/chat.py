@@ -95,27 +95,49 @@ def main():
         print(output)
     else:
         # Interactive mode
+        # Guard: stdin must be connected for interactive use.
+        # In Docker, 'docker run' without '-i' closes stdin immediately,
+        # causing input() to raise EOFError on the first call.
+        if not sys.stdin.readable() or sys.stdin.closed:
+            print("Error: Interactive mode requires an attached stdin.",
+                  file=sys.stderr)
+            print("Hint: Use 'docker run -it ...' or provide --prompt for one-shot mode.",
+                  file=sys.stderr)
+            sys.exit(1)
+
         print("\nEntering interactive mode. Type 'exit' or 'quit' to stop.\n")
+        received_any_input = False
         while True:
             try:
                 user_input = input("You: ")
+                received_any_input = True
                 if user_input.strip().lower() in ["exit", "quit"]:
                     break
                 if not user_input.strip():
                     continue
-                
+
                 with torch.no_grad():
                     output = generate(
-                        model, 
-                        tokenizer, 
-                        user_input, 
-                        max_new_tokens=args.max_new_tokens, 
+                        model,
+                        tokenizer,
+                        user_input,
+                        max_new_tokens=args.max_new_tokens,
                         temperature=args.temperature,
                         generator=generator
                     )
-                # We print only the GPT portion of the response or the whole output
                 print(f"GPT: {output}")
-            except (KeyboardInterrupt, EOFError):
+            except KeyboardInterrupt:
+                print()
+                break
+            except EOFError:
+                if not received_any_input:
+                    print("\nError: stdin closed before any input was received.",
+                          file=sys.stderr)
+                    print("Hint: Use 'docker run -it ...' or provide --prompt for one-shot mode.",
+                          file=sys.stderr)
+                    sys.exit(1)
+                # Mid-session EOF (e.g. Ctrl+D) — exit gracefully
+                print()
                 break
 
 if __name__ == "__main__":
