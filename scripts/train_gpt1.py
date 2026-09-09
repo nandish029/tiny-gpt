@@ -21,6 +21,7 @@ def main():
     parser.add_argument("--out_dir", type=str, default="checkpoints/gpt1")
     parser.add_argument("--results_path", type=str, default="experiments/gpt1/results.md")
     parser.add_argument("--steps", type=int, default=None, help="Override training steps (e.g. for smoke testing)")
+    parser.add_argument("--resume", type=str, default=None, help="Path to checkpoint to resume training from")
     args = parser.parse_args()
 
     # Load configuration
@@ -81,6 +82,16 @@ def main():
     
     # Initial loss check and param update check
     optimizer = create_optimizer(model, learning_rate=learning_rate)
+    
+    start_step = 0
+    if args.resume and os.path.exists(args.resume):
+        print(f"Resuming training from {args.resume}...")
+        checkpoint = torch.load(args.resume, map_location=device, weights_only=False)
+        model.load_state_dict(checkpoint['model_state_dict'])
+        optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+        start_step = checkpoint.get('step', 0)
+        print(f"Resumed from step {start_step}")
+
     loss = train_step(model, optimizer, x, y)
     assert torch.isfinite(loss), f"Initial loss is not finite: {loss.item()}"
     print("Sanity check passed!")
@@ -119,7 +130,7 @@ def main():
         f.write("| Step | Train Loss | Validation Loss |\n")
         f.write("|------|------------|-----------------|\n")
         
-        for step in range(1, train_steps + 1):
+        for step in range(start_step + 1, train_steps + 1):
             x, y = dataset.get_batch(split="train", batch_size=batch_size)
             loss = train_step(model, optimizer, x, y)
             
@@ -142,7 +153,9 @@ def main():
     print(f"Training completed in {elapsed:.2f}s")
     
     os.makedirs(args.out_dir, exist_ok=True)
-    checkpoint_path = os.path.join(args.out_dir, "gpt1_baseline.pt")
+    # Ensure the checkpoint name reflects the config file being used (e.g., gpt1 or gpt2)
+    config_name = os.path.splitext(os.path.basename(args.config))[0]
+    checkpoint_path = os.path.join(args.out_dir, f"{config_name}_baseline.pt")
     torch.save({
         'model_state_dict': model.state_dict(),
         'optimizer_state_dict': optimizer.state_dict(),
