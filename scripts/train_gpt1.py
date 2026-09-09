@@ -8,7 +8,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 from src.tokenizer.character import CharacterTokenizer
 from src.data.language_dataset import LanguageDataset
 from src.model.gpt import GPT
-from src.utils.device import get_device
+from src.utils.device import resolve_device
 from src.utils.config import load_config
 from src.training.optimizer import create_optimizer
 from src.training.step import train_step, validation_step
@@ -22,6 +22,7 @@ def main():
     parser.add_argument("--results_path", type=str, default="experiments/gpt1/results.md")
     parser.add_argument("--steps", type=int, default=None, help="Override training steps (e.g. for smoke testing)")
     parser.add_argument("--resume", type=str, default=None, help="Path to checkpoint to resume training from")
+    parser.add_argument("--device", type=str, choices=["auto", "cpu", "cuda"], default="auto", help="Execution device")
     args = parser.parse_args()
 
     # Load configuration
@@ -31,7 +32,7 @@ def main():
 
     seed = train_cfg.get('seed', 42)
     torch.manual_seed(seed)
-    device = get_device()
+    device = resolve_device(args.device)
     print(f"Using device: {device}")
     
     # Load tokenizer
