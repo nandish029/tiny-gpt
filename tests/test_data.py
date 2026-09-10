@@ -29,7 +29,7 @@ class TestDataPipeline(unittest.TestCase):
         
         # 6. Dataset loader successfully loads the processed data
         train_ds = TinyStoriesDataset(split="train", data_dir=test_dir1)
-        valid_ds = TinyStoriesDataset(split="valid", data_dir=test_dir1)
+        valid_ds = TinyStoriesDataset(split="val", data_dir=test_dir1)
         
         # 2. Non-empty sets
         self.assertEqual(len(train_ds), 90)

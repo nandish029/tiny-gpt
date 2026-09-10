@@ -136,7 +136,7 @@ def main():
             loss = train_step(model, optimizer, x, y)
             
             if step % val_interval == 0 or step == train_steps:
-                val_x, val_y = dataset.get_batch(split="valid", batch_size=batch_size)
+                val_x, val_y = dataset.get_batch(split="val", batch_size=batch_size)
                 val_loss = validation_step(model, val_x, val_y)
                 
                 print(f"Step {step} | Train Loss: {loss.item():.4f} | Val Loss: {val_loss.item():.4f}")

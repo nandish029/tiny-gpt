@@ -7,7 +7,7 @@ from src.data.dataset import TinyStoriesDataset
 def inspect():
     try:
         train_ds = TinyStoriesDataset(split="train")
-        valid_ds = TinyStoriesDataset(split="valid")
+        valid_ds = TinyStoriesDataset(split="val")
     except FileNotFoundError as e:
         print(e)
         return
