@@ -10,6 +10,7 @@ from src.data.language_dataset import LanguageDataset
 from src.model.gpt import GPT
 from src.training.step import train_step, validation_step
 from src.generation.generate import generate
+from src.utils.device import get_device
 
 class TestIntegrationWorkflow(unittest.TestCase):
     """
@@ -74,8 +75,12 @@ class TestIntegrationWorkflow(unittest.TestCase):
         self.assertEqual(val_x.shape, (2, 8))
         
         # 4. Model Initialization
-        model = GPT(**self.config['model'])
+        device = get_device()
+        model = GPT(**self.config['model']).to(device)
         
+        # Verify model and inputs are on the same device
+        self.assertEqual(next(model.parameters()).device, train_x.device)
+
         # 5. Training Step
         optimizer = torch.optim.AdamW(model.parameters(), lr=1e-3)
         train_loss = train_step(model, optimizer, train_x, train_y)
