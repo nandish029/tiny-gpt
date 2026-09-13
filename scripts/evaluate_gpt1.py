@@ -53,7 +53,7 @@ def main():
     val_losses = []
     # Evaluate a reasonable number of batches (e.g. 50 batches of size 32)
     # Be careful not to sample more than the valid set has.
-    max_batches = min(50, len(dataset.valid_data) - config['max_context_length'] - 1)
+    max_batches = min(50, len(dataset.val_data) - config['max_context_length'] - 1)
     if max_batches <= 0:
         print("Warning: Validation dataset is too small to compute loss.")
         avg_val_loss = float('inf')
@@ -61,7 +61,7 @@ def main():
     else:
         with torch.no_grad():
             for _ in range(max_batches):
-                x, y = dataset.get_batch("valid", batch_size=32)
+                x, y = dataset.get_batch("val", batch_size=32)
                 loss = validation_step(model, x, y)
                 val_losses.append(loss.item())
                 
