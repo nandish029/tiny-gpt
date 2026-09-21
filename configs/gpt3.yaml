@@ -8,6 +8,6 @@ model:
 training:
   batch_size: 16
   learning_rate: 3.0e-4
-  train_steps: 1000
+  train_steps: 5000
   val_interval: 100
   seed: 42
