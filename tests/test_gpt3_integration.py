@@ -6,6 +6,7 @@ import json
 from src.tokenizer.factory import get_tokenizer
 from src.data.language_dataset import LanguageDataset
 from src.model.gpt import GPT
+from src.utils.device import get_device
 from scripts.train_subword_tokenizer import main as train_tokenizer_main
 
 class TestGPT3Integration(unittest.TestCase):
@@ -57,6 +58,7 @@ class TestGPT3Integration(unittest.TestCase):
         self.assertTrue(torch.all(y < self.tokenizer.vocab_size))
         
     def test_model_integration(self):
+        device = get_device()
         model = GPT(
             vocab_size=self.tokenizer.vocab_size,
             embedding_dim=32,
@@ -64,7 +66,7 @@ class TestGPT3Integration(unittest.TestCase):
             num_heads=2,
             feed_forward_dim=64,
             num_layers=2
-        )
+        ).to(device)
         
         # Verify internal Transformer architecture is unchanged (except embeddings/lm_head due to vocab)
         # We can check specific layers exist
@@ -73,10 +75,14 @@ class TestGPT3Integration(unittest.TestCase):
         
         dataset = LanguageDataset(self.tokenizer, data_dir=self.data_dir, context_length=16)
         x, y = dataset.get_batch("train", batch_size=4)
+        x, y = x.to(device), y.to(device)
         
         logits = model(x)
         self.assertEqual(logits.shape, (4, 16, self.tokenizer.vocab_size))
         self.assertTrue(torch.all(torch.isfinite(logits)))
+        
+        self.assertEqual(next(model.parameters()).device.type, device.type)
+        self.assertEqual(x.device.type, device.type)
 
 if __name__ == '__main__':
     unittest.main()
