@@ -78,7 +78,7 @@ class TestCLI(unittest.TestCase):
     @patch('scripts.chat.load_config')
     @patch('scripts.chat.torch.load')
     @patch('scripts.chat.GPT')
-    @patch('scripts.chat.CharacterTokenizer')
+    @patch('scripts.chat.get_tokenizer')
     @patch('scripts.chat.generate')
     def test_mocked_one_shot(self, mock_generate, mock_tokenizer_class, mock_gpt_class, mock_torch_load, mock_load_config, mock_resolve_device):
         """9, 11, 12, 13. Test the main logic via mocks."""
@@ -119,7 +119,7 @@ class TestCLI(unittest.TestCase):
     @patch('scripts.chat.load_config')
     @patch('scripts.chat.torch.load')
     @patch('scripts.chat.GPT')
-    @patch('scripts.chat.CharacterTokenizer')
+    @patch('scripts.chat.get_tokenizer')
     @patch('scripts.chat.generate')
     def test_mocked_interactive(self, mock_generate, mock_tokenizer_class, mock_gpt_class, mock_torch_load, mock_load_config, mock_resolve_device):
         """10. interactive mode can be tested without requiring manual input."""
@@ -176,7 +176,7 @@ class TestCLI(unittest.TestCase):
     @patch('scripts.chat.load_config')
     @patch('scripts.chat.torch.load')
     @patch('scripts.chat.GPT')
-    @patch('scripts.chat.CharacterTokenizer')
+    @patch('scripts.chat.get_tokenizer')
     @patch('scripts.chat.generate')
     def test_interactive_immediate_eof_exits_with_error(self, mock_generate, mock_tokenizer_class, mock_gpt_class, mock_torch_load, mock_load_config, mock_resolve_device):
         """Simulates docker run without -i: input() raises EOFError immediately."""
@@ -203,7 +203,7 @@ class TestCLI(unittest.TestCase):
     @patch('scripts.chat.load_config')
     @patch('scripts.chat.torch.load')
     @patch('scripts.chat.GPT')
-    @patch('scripts.chat.CharacterTokenizer')
+    @patch('scripts.chat.get_tokenizer')
     @patch('scripts.chat.generate')
     def test_interactive_mid_session_eof_exits_gracefully(self, mock_generate, mock_tokenizer_class, mock_gpt_class, mock_torch_load, mock_load_config, mock_resolve_device):
         """Mid-session Ctrl+D (EOF after some successful input) exits gracefully."""
@@ -227,7 +227,7 @@ class TestCLI(unittest.TestCase):
     @patch('scripts.chat.load_config')
     @patch('scripts.chat.torch.load')
     @patch('scripts.chat.GPT')
-    @patch('scripts.chat.CharacterTokenizer')
+    @patch('scripts.chat.get_tokenizer')
     @patch('scripts.chat.generate')
     def test_interactive_multiple_prompts_then_exit(self, mock_generate, mock_tokenizer_class, mock_gpt_class, mock_torch_load, mock_load_config, mock_resolve_device):
         """Interactive mode accepts multiple prompts then exits on 'exit'."""

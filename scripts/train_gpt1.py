@@ -5,7 +5,8 @@ import time
 import argparse
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from src.tokenizer.character import CharacterTokenizer
+from src.tokenizer.factory import get_tokenizer
+from src.tokenizer.character import CharacterTokenizer # For test backward compatibility
 from src.data.language_dataset import LanguageDataset
 from src.model.gpt import GPT
 from src.utils.device import resolve_device
@@ -22,6 +23,7 @@ def main():
     parser.add_argument("--results_path", type=str, default="experiments/gpt1/results.md")
     parser.add_argument("--steps", type=int, default=None, help="Override training steps (e.g. for smoke testing)")
     parser.add_argument("--resume", type=str, default=None, help="Path to checkpoint to resume training from")
+    parser.add_argument("--tokenizer_type", type=str, choices=["char", "subword"], default="char", help="Type of tokenizer to use")
     parser.add_argument("--device", type=str, choices=["auto", "cpu", "cuda"], default="auto", help="Execution device")
     args = parser.parse_args()
 
@@ -36,7 +38,7 @@ def main():
     print(f"Using device: {device}")
     
     # Load tokenizer
-    tokenizer = CharacterTokenizer()
+    tokenizer = get_tokenizer(args.tokenizer_type)
     tokenizer.load(args.tokenizer)
     
     vocab_size = tokenizer.vocab_size
@@ -109,7 +111,7 @@ def main():
     with open(args.results_path, "w") as f:
         f.write("# GPT-1 Baseline\n\n")
         f.write("## Configuration\n")
-        f.write(f"- tokenizer: CharacterTokenizer\n")
+        f.write(f"- tokenizer type: {args.tokenizer_type}\n")
         f.write(f"- vocab size: {vocab_size}\n")
         f.write(f"- embedding dimension: {embedding_dim}\n")
         f.write(f"- context length: {max_context_length}\n")
@@ -162,6 +164,7 @@ def main():
         'optimizer_state_dict': optimizer.state_dict(),
         'step': train_steps,
         'config': {
+            'tokenizer_type': args.tokenizer_type,
             'vocab_size': vocab_size,
             'embedding_dim': embedding_dim,
             'max_context_length': max_context_length,

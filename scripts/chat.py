@@ -5,7 +5,8 @@ import torch
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from src.model.gpt import GPT
-from src.tokenizer.character import CharacterTokenizer
+from src.tokenizer.factory import get_tokenizer
+from src.tokenizer.character import CharacterTokenizer # For test backward compatibility
 from src.generation.generate import generate
 from src.utils.device import resolve_device
 from src.utils.config import load_config
@@ -15,6 +16,7 @@ def parse_args():
     parser.add_argument("--checkpoint", type=str, required=True, help="Path to the model checkpoint (.pt)")
     parser.add_argument("--tokenizer", type=str, required=True, help="Path to the tokenizer definition (.json)")
     parser.add_argument("--config", type=str, required=True, help="Path to the model configuration (.yaml)")
+    parser.add_argument("--tokenizer_type", type=str, choices=["char", "subword"], default="char", help="Type of tokenizer to use")
     parser.add_argument("--device", type=str, default="auto", choices=["auto", "cpu", "cuda"], help="Execution device (auto, cpu, cuda)")
     parser.add_argument("--prompt", type=str, default=None, help="Optional prompt for one-shot generation. If omitted, enters interactive mode.")
     parser.add_argument("--temperature", type=float, default=0.8, help="Generation temperature (must be > 0.0)")
@@ -74,7 +76,7 @@ def main():
     print("Model loaded successfully.")
     
     # 6. Load Tokenizer
-    tokenizer = CharacterTokenizer()
+    tokenizer = get_tokenizer(args.tokenizer_type)
     tokenizer.load(args.tokenizer)
     
     # Setup Generation

@@ -7,7 +7,7 @@ sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')
 
 class TestTrainCLIArgs(unittest.TestCase):
     @patch('scripts.train_gpt1.load_config')
-    @patch('scripts.train_gpt1.CharacterTokenizer')
+    @patch('scripts.train_gpt1.get_tokenizer')
     @patch('scripts.train_gpt1.LanguageDataset')
     @patch('scripts.train_gpt1.GPT')
     @patch('scripts.train_gpt1.create_optimizer')

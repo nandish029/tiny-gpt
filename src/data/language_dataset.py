@@ -12,17 +12,21 @@ class LanguageDataset:
         self.train_data = self._load_and_encode("train", data_dir)
         self.val_data = self._load_and_encode("val", data_dir)
         
+
     def _load_and_encode(self, split, data_dir):
         """Loads dataset split and encodes it into a 1D tensor of IDs."""
         ds = TinyStoriesDataset(split=split, data_dir=data_dir)
         # Join all stories. Using space is simple and effective.
         all_text = " ".join(ds.stories)
-        
-        # Filter unsupported characters to prevent tokenizer errors.
-        # This keeps the pipeline robust even if validation data has unseen characters.
-        valid_chars = set(self.tokenizer.char_to_id.keys())
-        filtered_text = "".join(c for c in all_text if c in valid_chars)
-        
+
+        # If it's a character tokenizer (which has char_to_id), filter unsupported characters.
+        if hasattr(self.tokenizer, 'char_to_id'):
+            valid_chars = set(self.tokenizer.char_to_id.keys())
+            filtered_text = "".join(c for c in all_text if c in valid_chars)
+        else:
+            # Subword tokenizer handles unknown bytes/characters natively
+            filtered_text = all_text
+
         ids = self.tokenizer.encode(filtered_text)
         return torch.tensor(ids, dtype=torch.long)
         
