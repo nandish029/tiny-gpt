@@ -161,8 +161,9 @@ class TestGeneration(unittest.TestCase):
             
         checkpoint = torch.load(ckpt_path, map_location='cpu')
         config = checkpoint['config']
+        model_kwargs = {k: v for k, v in config.items() if k != 'tokenizer_type'}
         
-        model = GPT(**config)
+        model = GPT(**model_kwargs)
         model.load_state_dict(checkpoint['model_state_dict'])
         model.eval()
         

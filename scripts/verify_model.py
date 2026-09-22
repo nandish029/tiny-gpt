@@ -92,7 +92,8 @@ def verify_model(model_name: str, device: str = "cpu"):
 
     # 9. Model instantiates and loads
     try:
-        model = GPT(**ckpt_config).to(resolved_device)
+        model_kwargs = {k: v for k, v in ckpt_config.items() if k != 'tokenizer_type'}
+        model = GPT(**model_kwargs).to(resolved_device)
         model.load_state_dict(checkpoint['model_state_dict'])
         model.eval()
         print("✓ Model instantiated and state dict loaded")

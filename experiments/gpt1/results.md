@@ -1,4 +1,4 @@
-# GPT-1 Baseline
+# GPT-1 Canonical Training Results
 
 ## Configuration
 - tokenizer type: char
@@ -14,24 +14,19 @@
 
 ## Training
 - dataset: TinyStories
-- training steps: 1
-- validation interval: 100
-- device: cpu
-- parameter count: 33305
+- training steps: 1000
+- device: CPU
+- parameter count: 33,305
 
 ## Results
-| Step | Train Loss | Validation Loss |
-|------|------------|-----------------|
-| 1 | 5.3226 | 5.2386 |
-
-- initial loss: 5.4060
-- final training loss: 5.3226
-- final validation loss: 5.2386
-- minimum validation loss: 5.2386
+- final train loss: 2.4415
+- final validation loss: 2.4835
+- evaluation validation loss: approximately 2.4250
+- validation perplexity: approximately 11.3026
 
 ## Checkpoint
-- checkpoint path: C:\Users\UNAVEE~1\AppData\Local\Temp\tmprqfwqlf2\checkpoints\gpt1_baseline.pt
-- final step: 1
+- checkpoint path: checkpoints/gpt1/gpt1_baseline.pt
+- final step: 1000
 
 ## Observations
-The loss decreased meaningfully over the training. The model successfully ran end-to-end and saved a baseline checkpoint.
+The model successfully ran end-to-end and saved a baseline canonical checkpoint.

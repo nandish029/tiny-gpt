@@ -56,17 +56,17 @@ class TestTrainCLIArgs(unittest.TestCase):
         mock_torch.isfinite.return_value = True
 
         # Test default (auto)
-        with patch('sys.argv', ['train_gpt1.py']):
+        with patch('sys.argv', ['train_gpt1.py', '--overwrite']):
             main()
             mock_resolve_device.assert_called_with('auto')
 
         # Test explicit cpu
-        with patch('sys.argv', ['train_gpt1.py', '--device', 'cpu']):
+        with patch('sys.argv', ['train_gpt1.py', '--device', 'cpu', '--overwrite']):
             main()
             mock_resolve_device.assert_called_with('cpu')
 
         # Test explicit cuda
-        with patch('sys.argv', ['train_gpt1.py', '--device', 'cuda']):
+        with patch('sys.argv', ['train_gpt1.py', '--device', 'cuda', '--overwrite']):
             main()
             mock_resolve_device.assert_called_with('cuda')
 
@@ -94,13 +94,15 @@ class TestTrainCLIArgs(unittest.TestCase):
 
             config_path = os.path.join(os.path.dirname(__file__), '..', 'configs', 'gpt1.yaml')
 
+            results_path = os.path.join(temp_dir, "results.md")
+
             with patch('sys.argv', ['train_gpt1.py', '--out_dir', ckpt_dir, '--config', config_path, '--steps', '1']):
                 with self.assertRaises(SystemExit) as cm:
                     main()
                 self.assertEqual(cm.exception.code, 1) # Expected to exit due to safety
 
-            # If --overwrite is passed, it should bypass the safety check and proceed (we expect it to fail later due to missing data, but pass the safety check)
-            with patch('sys.argv', ['train_gpt1.py', '--out_dir', ckpt_dir, '--config', config_path, '--steps', '1', '--overwrite']):
+            # If --overwrite is passed, it should bypass the safety check and proceed
+            with patch('sys.argv', ['train_gpt1.py', '--out_dir', ckpt_dir, '--config', config_path, '--steps', '1', '--overwrite', '--results_path', results_path]):
                 with patch('scripts.train_gpt1.LanguageDataset') as mock_dataset: # Mock dataset to prevent data loading failure
                     mock_dataset.return_value.get_batch.return_value = (torch.zeros(16, 64, dtype=torch.long), torch.zeros(16, 64, dtype=torch.long))
                     with patch('scripts.train_gpt1.os.makedirs'): # Prevent file writing in the end
