@@ -30,7 +30,7 @@
 - minimum validation loss: 5.2386
 
 ## Checkpoint
-- checkpoint path: C:\Users\UNAVEE~1\AppData\Local\Temp\tmpls64fk5h\checkpoints\gpt1_baseline.pt
+- checkpoint path: C:\Users\UNAVEE~1\AppData\Local\Temp\tmplkgv_938\checkpoints\gpt1_baseline.pt
 - final step: 1
 
 ## Observations

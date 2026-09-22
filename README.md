@@ -13,14 +13,31 @@ This project strictly separates source code, environments, and generated artifac
 
 ---
 
-## 🛠️ Canonical Workflow (Planned)
+## 🟢 Status Accuracy
 
-> [!WARNING]
-> **Notice:** The project is currently in a pre-training hardening phase. The commands below for downloading canonical artifacts and training GPT-1/2/3 represent the **PLANNED** canonical workflow. The actual canonical CPU artifacts have not yet been published to Hugging Face.
+**IMPLEMENTED NOW:**
+- repository
+- training infrastructure
+- verification
+- tests
+- Docker
+- CPU/CUDA support
+- artifact cleanup
+- checkpoint overwrite protection
+
+**PLANNED:**
+- canonical CPU retraining
+- publishing canonical checkpoints
+- actual Hugging Face download workflow
+- fresh-machine artifact verification using canonical models
+
+---
+
+## 🛠️ Executable Workflow (Currently Implemented)
 
 ### A. Clone Repository
 ```bash
-git clone https://github.com/the-tiny-gpt-project/tiny-gpt.git
+git clone https://github.com/nandish029/tiny-gpt.git
 cd tiny-gpt
 ```
 
@@ -31,69 +48,74 @@ docker build -f docker/Dockerfile -t tiny-gpt:latest .
 
 ### C. Prepare Dataset
 ```bash
-python scripts/prepare_data.py --num_samples 100000 --seed 42 --out_dir data/processed
+python src/data/prepare.py --num_samples 100000 --seed 42 --data_dir data/processed
 ```
 
 ### D. Build Tokenizer (GPT-3 Subword Example)
 ```bash
-python scripts/train_tokenizer.py --data_path data/processed/train.jsonl --vocab_size 512 --out_path data/processed/gpt3_tokenizer.json
+python scripts/train_subword_tokenizer.py --data data/processed/train.jsonl --vocab_size 512 --out data/processed/gpt3_tokenizer.json
 ```
 
-### E. Train GPT-1 (CPU)
+---
+
+## 🚧 Canonical Workflow (PLANNED)
+
+> [!WARNING]
+> **Notice:** The project is currently in a pre-training hardening phase. The commands below represent the **PLANNED** canonical workflow for downloading canonical artifacts and training GPT-1/2/3. The actual canonical CPU artifacts have not yet been published to Hugging Face.
+
+### E. Train GPT-1 (CPU) [PLANNED]
 ```bash
 python scripts/train_gpt1.py --config configs/gpt1.yaml --tokenizer data/processed/tokenizer.json --device cpu
 ```
 
-### F. Train GPT-2 (CPU)
+### F. Train GPT-2 (CPU) [PLANNED]
 ```bash
-# Example command (GPT-2 training script pending)
-python scripts/train_gpt2.py --config configs/gpt2.yaml --tokenizer data/processed/tokenizer.json --device cpu
+python scripts/train_gpt1.py --config configs/gpt2.yaml --tokenizer data/processed/tokenizer.json --device cpu
 ```
 
-### G. Train GPT-3 (CPU)
+### G. Train GPT-3 (CPU) [PLANNED]
 ```bash
-# Example command (GPT-3 training script pending)
-python scripts/train_gpt3.py --config configs/gpt3.yaml --tokenizer data/processed/gpt3_tokenizer.json --device cpu
+python scripts/train_gpt1.py --config configs/gpt3.yaml --tokenizer data/processed/gpt3_tokenizer.json --tokenizer_type subword --device cpu
 ```
 
-### H. Resume Training
+### H. Resume Training [PLANNED]
 To resume training, provide the `--resume` flag and the path to the checkpoint:
 ```bash
 python scripts/train_gpt1.py --config configs/gpt1.yaml --tokenizer data/processed/tokenizer.json --resume checkpoints/gpt1/gpt1_baseline.pt --device cpu
 ```
 
-### I. Evaluate Model
+### I. Evaluate Model [PLANNED]
 ```bash
 python scripts/evaluate_gpt1.py --checkpoint checkpoints/gpt1/gpt1_baseline.pt --data_dir data/processed
 ```
 
-### J. Verify Model Integrity
+### J. Verify Model Integrity [PLANNED]
 ```bash
 python scripts/verify_model.py --model gpt1 --device cpu
 ```
 
-### K. Download Model from Hugging Face
-*Downloads the canonical checkpoint and tokenizer directly to local storage.*
+### K. Download Model from Hugging Face [PLANNED]
+*Artifact download interface prepared; canonical artifacts are not yet published.*
 ```bash
 python scripts/download_model.py --model gpt1
 ```
 
-### L. Run Native CPU Inference
+### L. Run Native CPU Inference [PLANNED]
 ```bash
 python scripts/chat.py --checkpoint checkpoints/gpt1/gpt1_baseline.pt --tokenizer data/processed/tokenizer.json --config configs/gpt1.yaml --device cpu
 ```
 
-### M. Run Native CUDA Inference
+### M. Run Native CUDA Inference [PLANNED]
 ```bash
 python scripts/chat.py --checkpoint checkpoints/gpt1/gpt1_baseline.pt --tokenizer data/processed/tokenizer.json --config configs/gpt1.yaml --device cuda
 ```
 
-### N. Run Docker CPU Inference
+### N. Run Docker CPU Inference [PLANNED]
 ```bash
 docker run -it -v "$(pwd):/app" --rm tiny-gpt:latest python scripts/chat.py --checkpoint checkpoints/gpt1/gpt1_baseline.pt --tokenizer data/processed/tokenizer.json --config configs/gpt1.yaml --device cpu
 ```
 
-### O. Run Docker CUDA Inference
+### O. Run Docker CUDA Inference [PLANNED]
 ```bash
 docker run --gpus all -it -v "$(pwd):/app" --rm tiny-gpt:latest python scripts/chat.py --checkpoint checkpoints/gpt1/gpt1_baseline.pt --tokenizer data/processed/tokenizer.json --config configs/gpt1.yaml --device cuda
 ```
