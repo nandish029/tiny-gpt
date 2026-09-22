@@ -2,74 +2,109 @@
 
 This project builds a small decoder-only GPT-like language model from scratch and progressively develops five model versions.
 
-## Docker Workflow & Development Guide
+## Project Structure & Philosophy
 
-This project is built around a **reusable Docker environment**. The core philosophy is to treat the **source code** and the **execution environment** as two completely separate things.
+This project strictly separates source code, environments, and generated artifacts:
+- **GitHub:** Contains source code, configurations, tests, and documentation.
+- **Hugging Face Hub:** Will contain canonical trained model artifacts (checkpoints and tokenizers).
+- **Generated Datasets:** Built reproducibly from scripts; not committed to the repository.
+- **Colab:** An optional training environment, not required for inference.
+- **Docker:** A reproducible execution environment, decoupled from the source code.
 
-- **SOURCE CODE (GitHub):** The Python scripts, model configurations, and tests.
-- **ENVIRONMENT (Docker Image):** Python, PyTorch, CUDA, and system dependencies.
+---
 
-You DO NOT need to rebuild the Docker image every time you edit a Python file.
+## 🛠️ Canonical Workflow (Planned)
 
-### 1. Build the Docker Image (One-Time Setup)
-Build the unified Docker image that supports both CPU and NVIDIA GPU workloads.
+> [!WARNING]
+> **Notice:** The project is currently in a pre-training hardening phase. The commands below for downloading canonical artifacts and training GPT-1/2/3 represent the **PLANNED** canonical workflow. The actual canonical CPU artifacts have not yet been published to Hugging Face.
+
+### A. Clone Repository
 ```bash
-docker build -f docker/Dockerfile -t tiny-gpt:test .
-```
-> **Note:** The image is based on an official PyTorch container and is roughly ~3.6GB in size to include necessary CUDA libraries natively.
-
-### 2. Standard Development (Bind Mounts)
-To develop locally, you bind-mount your source code into the container. This means any code changes you make on your host machine are instantly reflected inside the container.
-
-**CPU Mode:**
-```bash
-docker run -v "$(pwd):/app" --rm tiny-gpt:test python scripts/check_device.py
+git clone https://github.com/the-tiny-gpt-project/tiny-gpt.git
+cd tiny-gpt
 ```
 
-**NVIDIA GPU Mode (requires NVIDIA GPU, driver, and Container Toolkit):**
+### B. Build Docker Environment
 ```bash
-docker run --gpus all -v "$(pwd):/app" --rm tiny-gpt:test python scripts/validate_cuda.py
+docker build -f docker/Dockerfile -t tiny-gpt:latest .
 ```
 
-### 3. Running with Project Data and Checkpoints
-Artifacts like datasets and checkpoints are not baked into the Docker image. Because you are bind-mounting the entire project directory (`-v "$(pwd):/app"`), the container naturally has read/write access to `data/` and `checkpoints/` exactly where the scripts expect them.
-
-### 4. Updating Code vs. Updating Environment
-If a friend makes changes to the model architecture:
-1. **Pull the code:** `git pull`
-2. **Run the container:** `docker run -v "$(pwd):/app" ...`
-*No Docker image rebuild is required!*
-
-**When IS a Docker rebuild required?**
-Only rebuild the image if the environment dependencies change (e.g., adding a new pip package to `requirements.txt`).
-
-### 5. Sharing the Environment (`docker save` / `docker load`)
-If you want to share the exact environment without forcing a friend to download gigabytes of PyTorch layers, you can export and import the image:
-
+### C. Prepare Dataset
 ```bash
-# Export the environment
-docker save tiny-gpt:test -o tiny-gpt-env.tar
-
-# Your friend imports the environment
-docker load -i tiny-gpt-env.tar
-```
-> **Important:** This only transfers the *environment*. Your friend must still `git clone` the repository to get the actual *source code*.
-
-### 6. NVIDIA GPU Prerequisites
-To use the `--gpus all` flag, the host machine must have:
-1. A physical NVIDIA GPU.
-2. An appropriate NVIDIA display driver installed on the host OS.
-3. The NVIDIA Container Toolkit installed (or Docker Desktop with WSL2 GPU support enabled).
-The Docker image itself provides PyTorch and the CUDA runtime, but it cannot provide the hardware or the low-level host driver.
-
-## Reproducing GPT-1
-
-The GPT-1 baseline can be fully reproduced deterministically from a fresh clone. This ensures the model training, tokenizer building, and data generation all work from scratch without relying on existing tracked artifacts.
-
-To verify the integrity of the frozen baseline and test the reproducibility pipeline, run:
-
-```bash
-python scripts/validate_reproducibility.py
+python scripts/prepare_data.py --num_samples 100000 --seed 42 --out_dir data/processed
 ```
 
-This script will verify that the frozen model checkpoint is intact, then create a temporary `scratch/reproduce` environment to prepare the dataset, build the tokenizer, run a 5-step smoke test of the training script, and evaluate the resulting checkpoint.
+### D. Build Tokenizer (GPT-3 Subword Example)
+```bash
+python scripts/train_tokenizer.py --data_path data/processed/train.jsonl --vocab_size 512 --out_path data/processed/gpt3_tokenizer.json
+```
+
+### E. Train GPT-1 (CPU)
+```bash
+python scripts/train_gpt1.py --config configs/gpt1.yaml --tokenizer data/processed/tokenizer.json --device cpu
+```
+
+### F. Train GPT-2 (CPU)
+```bash
+# Example command (GPT-2 training script pending)
+python scripts/train_gpt2.py --config configs/gpt2.yaml --tokenizer data/processed/tokenizer.json --device cpu
+```
+
+### G. Train GPT-3 (CPU)
+```bash
+# Example command (GPT-3 training script pending)
+python scripts/train_gpt3.py --config configs/gpt3.yaml --tokenizer data/processed/gpt3_tokenizer.json --device cpu
+```
+
+### H. Resume Training
+To resume training, provide the `--resume` flag and the path to the checkpoint:
+```bash
+python scripts/train_gpt1.py --config configs/gpt1.yaml --tokenizer data/processed/tokenizer.json --resume checkpoints/gpt1/gpt1_baseline.pt --device cpu
+```
+
+### I. Evaluate Model
+```bash
+python scripts/evaluate_gpt1.py --checkpoint checkpoints/gpt1/gpt1_baseline.pt --data_dir data/processed
+```
+
+### J. Verify Model Integrity
+```bash
+python scripts/verify_model.py --model gpt1 --device cpu
+```
+
+### K. Download Model from Hugging Face
+*Downloads the canonical checkpoint and tokenizer directly to local storage.*
+```bash
+python scripts/download_model.py --model gpt1
+```
+
+### L. Run Native CPU Inference
+```bash
+python scripts/chat.py --checkpoint checkpoints/gpt1/gpt1_baseline.pt --tokenizer data/processed/tokenizer.json --config configs/gpt1.yaml --device cpu
+```
+
+### M. Run Native CUDA Inference
+```bash
+python scripts/chat.py --checkpoint checkpoints/gpt1/gpt1_baseline.pt --tokenizer data/processed/tokenizer.json --config configs/gpt1.yaml --device cuda
+```
+
+### N. Run Docker CPU Inference
+```bash
+docker run -it -v "$(pwd):/app" --rm tiny-gpt:latest python scripts/chat.py --checkpoint checkpoints/gpt1/gpt1_baseline.pt --tokenizer data/processed/tokenizer.json --config configs/gpt1.yaml --device cpu
+```
+
+### O. Run Docker CUDA Inference
+```bash
+docker run --gpus all -it -v "$(pwd):/app" --rm tiny-gpt:latest python scripts/chat.py --checkpoint checkpoints/gpt1/gpt1_baseline.pt --tokenizer data/processed/tokenizer.json --config configs/gpt1.yaml --device cuda
+```
+
+---
+
+## Testing & Validation
+
+The codebase includes an extensive test suite verifying mathematical correctness, architectural constraints, checkpoint integrity, and execution safety. Checkpoints are strictly protected from accidental overwrite unless the `--overwrite` flag is passed.
+
+To run the test suite:
+```bash
+python -m unittest discover tests
+```
