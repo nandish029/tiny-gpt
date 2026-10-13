@@ -1,37 +1,29 @@
-# GPT-1 Frozen Baseline
+# GPT-1 Canonical Freeze
 
-GPT-1 is now frozen and will not be modified for subsequent experiments.
+**STATUS: FROZEN**
 
-- checkpoint:
-  checkpoints/gpt1/gpt1_baseline.pt
+The canonical GPT-1 CPU baseline has been established and verified.
+All architecture, parameter configurations, and experimental parameters are frozen and immutable.
 
-- parameter count:
-  33,305
+## Architecture
+- vocab size: 89
+- embedding dimension: 32
+- context length: 64
+- heads: 4
+- feed-forward dimension: 128
+- layers: 2
+- Total Parameters: 33,305
 
-- architecture:
-  vocab_size=89
-  embedding_dim=32
-  context_length=64
-  num_heads=4
-  feed_forward_dim=128
-  num_layers=2
+## Training Profile
+- 1000 steps
+- device: cpu
+- dataset: 5000 deterministic samples
+- tokenizer: char
 
-- tokenizer:
-  character-level
+## Integrity
+- Model architecture verified statically against `configs/gpt1.yaml`.
+- Model architecture verified dynamically during load.
+- Generation checks passed.
+- Ephemeral canonical checkpoint (`checkpoints/gpt1/gpt1_baseline.pt`) is locally available but purposefully untracked in Git.
 
-- training steps:
-  1000
-
-- seed:
-  42
-
-- final training loss:
-  2.4415
-
-- final validation loss:
-  2.4835
-
-- minimum validation loss:
-  2.4426
-
-Future GPT-2 experiments must not modify this checkpoint.
+Do not modify the GPT-1 architecture or configs.

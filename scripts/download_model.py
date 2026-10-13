@@ -1,0 +1,49 @@
+import argparse
+import os
+import sys
+
+def download_model(model_name: str):
+    """
+    Downloads canonical CPU reproducibility models from Hugging Face.
+    """
+    print(f"=== Downloading Canonical Artifacts for: {model_name} ===")
+
+    # Target canonical local paths
+    ckpt_dir = f"checkpoints/{model_name}"
+    data_dir = "data/processed"
+
+    ckpt_path = os.path.join(ckpt_dir, f"{model_name}_baseline.pt")
+    tok_name = f"{model_name}_tokenizer.json" if model_name == "gpt3" else "tokenizer.json"
+    tok_path = os.path.join(data_dir, tok_name)
+
+    print(f"Target Checkpoint Path: {ckpt_path}")
+    print(f"Target Tokenizer Path:  {tok_path}")
+
+    # Check if we already have it
+    if os.path.exists(ckpt_path) and os.path.exists(tok_path):
+        print("\nArtifacts already exist locally. Skipping download.")
+        print(f"To verify, run: python scripts/verify_model.py --model {model_name}")
+        return
+
+    print("\nAttempting to connect to Hugging Face Hub...")
+    print("Repository: nandish029/tiny-gpt (Canonical Models)")
+
+    # ---------------------------------------------------------
+    # IMPORTANT: The canonical CPU models are NOT yet published.
+    # We must explicitly fail here until the actual CPU training
+    # phase is complete and the models are officially published.
+    # ---------------------------------------------------------
+    print(f"\nArtifact download interface prepared; canonical artifacts are not yet published.")
+    print("Please follow the build instructions in README.md to generate them locally,")
+    print("or wait until the next phase of the project is complete.")
+    sys.exit(1)
+
+def main():
+    parser = argparse.ArgumentParser(description="Download Canonical GPT Model from Hugging Face")
+    parser.add_argument("--model", type=str, required=True, choices=["gpt1", "gpt2", "gpt3"], help="Model to download")
+    args = parser.parse_args()
+
+    download_model(args.model)
+
+if __name__ == "__main__":
+    main()

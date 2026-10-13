@@ -6,7 +6,8 @@ import argparse
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from src.model.gpt import GPT
-from src.tokenizer.character import CharacterTokenizer
+from src.tokenizer.factory import get_tokenizer
+from src.tokenizer.character import CharacterTokenizer # For test backward compatibility
 from src.data.language_dataset import LanguageDataset
 from src.training.step import validation_step
 from src.generation.generate import generate
@@ -18,25 +19,28 @@ def main():
     parser.add_argument("--tokenizer", type=str, default="data/processed/tokenizer.json")
     parser.add_argument("--data_dir", type=str, default="data/processed")
     parser.add_argument("--results_path", type=str, default="experiments/gpt1/results.md")
+    parser.add_argument("--tokenizer_type", type=str, choices=["char", "subword"], default="char", help="Type of tokenizer to use")
     args = parser.parse_args()
 
     device = get_device()
     print(f"Using device: {device}")
     
-    # Task 1 - Load GPT-1
-    tokenizer = CharacterTokenizer()
+    # Task 1 - Load GPT
+    tokenizer = get_tokenizer(args.tokenizer_type)
     tokenizer.load(args.tokenizer)
     
     ckpt_path = args.checkpoint
     checkpoint = torch.load(ckpt_path, map_location=device, weights_only=False)
     config = checkpoint['config']
     
-    model = GPT(**config).to(device)
+    model_kwargs = {k: v for k, v in config.items() if k != 'tokenizer_type'}
+    model = GPT(**model_kwargs).to(device)
     model.load_state_dict(checkpoint['model_state_dict'])
     
     # Task 2 - Parameter Integrity
     param_count = sum(p.numel() for p in model.parameters() if p.requires_grad)
-    assert param_count == 33305, f"Expected 33,305 parameters, got {param_count}"
+    if args.tokenizer_type == "char":
+        assert param_count == 33305, f"Expected 33,305 parameters, got {param_count}"
     
     for p in model.parameters():
         assert torch.all(torch.isfinite(p)), "Parameter contains NaN or Inf"
@@ -99,7 +103,7 @@ def main():
         f.write("- architecture:\n")
         for k, v in config.items():
             f.write(f"  - {k}: {v}\n")
-        f.write("- tokenizer: CharacterTokenizer\n")
+        f.write(f"- tokenizer type: {args.tokenizer_type}\n")
         f.write(f"- validation loss: {avg_val_loss:.4f}\n")
         f.write(f"- validation perplexity: {perplexity:.4f}\n")
         f.write(f"- training loss from actual training run: N/A\n")

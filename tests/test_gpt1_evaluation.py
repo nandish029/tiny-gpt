@@ -42,7 +42,8 @@ class TestGPT1Evaluation(unittest.TestCase):
         self.assertEqual(config['feed_forward_dim'], 128)
         self.assertEqual(config['num_layers'], 2)
         
-        model = GPT(**config)
+        model_kwargs = {k: v for k, v in config.items() if k != 'tokenizer_type'}
+        model = GPT(**model_kwargs)
         model.load_state_dict(checkpoint['model_state_dict'])
         
         # 4. parameter count is 33,305
@@ -58,7 +59,8 @@ class TestGPT1Evaluation(unittest.TestCase):
             self.skipTest("Checkpoint not found.")
 
         checkpoint = torch.load(self.ckpt_path, map_location=self.device)
-        model = GPT(**checkpoint['config'])
+        model_kwargs2 = {k: v for k, v in checkpoint['config'].items() if k != 'tokenizer_type'}
+        model = GPT(**model_kwargs2)
         model.load_state_dict(checkpoint['model_state_dict'])
         
         tokenizer = CharacterTokenizer()

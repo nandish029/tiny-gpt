@@ -56,7 +56,8 @@ class TestGPT2Architecture(unittest.TestCase):
         checkpoint = torch.load(ckpt_path, map_location="cpu", weights_only=False)
         self.assertEqual(checkpoint['config']['vocab_size'], 89)
         
-        gpt1 = GPT(**checkpoint['config'])
+        model_kwargs = {k: v for k, v in checkpoint['config'].items() if k != 'tokenizer_type'}
+        gpt1 = GPT(**model_kwargs)
         gpt1.load_state_dict(checkpoint['model_state_dict'])
         param_count = sum(p.numel() for p in gpt1.parameters() if p.requires_grad)
         self.assertEqual(param_count, 33305)

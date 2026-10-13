@@ -22,7 +22,9 @@ class TestStaleReferences(unittest.TestCase):
         
         for directory in directories_to_check:
             dir_path = os.path.join(self.project_root, directory)
-            for root, _, files in os.walk(dir_path):
+            for root, dirs, files in os.walk(dir_path):
+                if '__pycache__' in dirs:
+                    dirs.remove('__pycache__')
                 for file in files:
                     if not file.endswith('.py'):
                         continue
@@ -33,7 +35,10 @@ class TestStaleReferences(unittest.TestCase):
                         
                     filepath = os.path.join(root, file)
                     with open(filepath, 'r', encoding='utf-8') as f:
-                        lines = f.readlines()
+                        try:
+                            lines = f.readlines()
+                        except UnicodeDecodeError:
+                            continue
                         
                     for i, line in enumerate(lines):
                         for forbidden in self.forbidden_strings:

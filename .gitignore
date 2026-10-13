@@ -29,7 +29,10 @@ Thumbs.db
 data/raw/
 data/processed/
 data/test_processed_*/
+data/docker_test/
+data/smoke/
 tests/temp_data/
+checkpoints/smoke/
 
 # temporary experiment artifacts
 scratch/
