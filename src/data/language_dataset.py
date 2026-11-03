@@ -30,10 +30,11 @@ class LanguageDataset:
         ids = self.tokenizer.encode(filtered_text)
         return torch.tensor(ids, dtype=torch.long)
         
-    def get_batch(self, split="train", batch_size=4):
+    def get_batch(self, split="train", batch_size=4, generator=None):
         """
         Samples a batch of context_length from the specified split.
         X is the input sequence, Y is the target sequence shifted by 1.
+        Supports an optional dedicated torch.Generator for independent sampling.
         """
         if split == "train":
             data = self.train_data
@@ -46,8 +47,11 @@ class LanguageDataset:
         if max_idx <= 0:
             raise ValueError("Dataset is too small for the given context length.")
             
-        # Sample starting indices randomly
-        ix = torch.randint(0, max_idx, (batch_size,))
+        # Sample starting indices randomly using provided generator or global RNG
+        if generator is not None:
+            ix = torch.randint(0, max_idx, (batch_size,), generator=generator)
+        else:
+            ix = torch.randint(0, max_idx, (batch_size,))
         
         # Extract sequences
         x = torch.stack([data[i : i + self.context_length] for i in ix])

@@ -1,0 +1,28 @@
+experiment:
+  name: baseline
+  description: "GPT-3 Baseline: 2 Transformer layers"
+  family: e1_depth
+
+model:
+  vocab_size: 512
+  embedding_dim: 32
+  max_context_length: 64
+  num_heads: 4
+  feed_forward_dim: 128
+  num_layers: 2
+
+training:
+  batch_size: 16
+  learning_rate: 3.0e-4
+  train_steps: 5000
+  val_interval: 100
+  seed: 42
+
+data:
+  tokenizer_path: data/processed/gpt3_tokenizer.json
+  tokenizer_type: subword
+  data_dir: data/processed
+
+paths:
+  checkpoint_dir: checkpoints/gpt4/e1_depth/baseline
+  results_dir: experiments/gpt4/e1_depth/results
