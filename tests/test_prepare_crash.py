@@ -3,7 +3,25 @@ import os
 import json
 import tempfile
 import shutil
+from unittest.mock import patch
 from src.data.prepare import prepare_data
+
+
+class MockTinyStoriesDataset:
+    """Deterministic offline mock for the streaming TinyStories dataset."""
+    def __init__(self, total=500):
+        self.total = total
+
+    def __iter__(self):
+        for i in range(self.total):
+            yield {
+                "text": (
+                    f"Once upon a time, story {i} unfolded in a quiet little village. "
+                    f"A cheerful little puppy named Toby liked to explore the green garden. "
+                    f"Every afternoon he shared sweet apples with all of his kind friends. The end."
+                )
+            }
+
 
 class TestPrepareData(unittest.TestCase):
     def setUp(self):
@@ -12,7 +30,8 @@ class TestPrepareData(unittest.TestCase):
     def tearDown(self):
         shutil.rmtree(self.temp_dir)
         
-    def test_prepare_data_files_exist(self):
+    @patch("src.data.prepare.load_dataset", side_effect=lambda *args, **kwargs: MockTinyStoriesDataset())
+    def test_prepare_data_files_exist(self, mock_load):
         # Run preparation for a small number of samples
         prepare_data(num_samples=100, seed=42, data_dir=self.temp_dir)
         

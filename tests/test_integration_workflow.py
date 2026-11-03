@@ -3,6 +3,7 @@ import os
 import tempfile
 import yaml
 import torch
+from unittest.mock import patch
 
 from src.data.prepare import prepare_data
 from src.tokenizer.character import CharacterTokenizer
@@ -11,6 +12,23 @@ from src.model.gpt import GPT
 from src.training.step import train_step, validation_step
 from src.generation.generate import generate
 from src.utils.device import get_device
+
+
+class MockTinyStoriesDataset:
+    """Deterministic offline mock for the streaming TinyStories dataset."""
+    def __init__(self, total=500):
+        self.total = total
+
+    def __iter__(self):
+        for i in range(self.total):
+            yield {
+                "text": (
+                    f"Once upon a time, story {i} unfolded in a quiet little village. "
+                    f"A cheerful little puppy named Toby liked to explore the green garden. "
+                    f"Every afternoon he shared sweet apples with all of his kind friends. The end."
+                )
+            }
+
 
 class TestIntegrationWorkflow(unittest.TestCase):
     """
@@ -30,7 +48,8 @@ class TestIntegrationWorkflow(unittest.TestCase):
     def tearDown(self):
         self.temp_dir.cleanup()
 
-    def test_full_pipeline(self):
+    @patch("src.data.prepare.load_dataset", side_effect=lambda *args, **kwargs: MockTinyStoriesDataset())
+    def test_full_pipeline(self, mock_load):
         # 1. Dataset Preparation
         # Use a tiny number of samples
         prepare_data(num_samples=10, seed=42, data_dir=self.data_dir)
