@@ -1,64 +1,64 @@
 {
   "gpt1": {
-    "repo_id": null,
-    "revision": null,
+    "repo_id": "binod029/tiny-gpt",
+    "revision": "b6821b4095b927392276c643007588ee40244282",
     "artifacts": {
       "checkpoint": {
-        "remote_filename": null,
+        "remote_filename": "checkpoints/gpt1/gpt1_baseline.pt",
         "local_path": "checkpoints/gpt1/gpt1_baseline.pt",
-        "sha256": null
+        "sha256": "7e67e9774e57750ca8b1e7c47438fbe73ca9c55fb3c22ae68716dd030cb659ab"
       },
       "tokenizer": {
-        "remote_filename": null,
+        "remote_filename": "tokenizers/tokenizer.json",
         "local_path": "data/processed/tokenizer.json",
-        "sha256": null
+        "sha256": "d5d37c711f1617804e39dcf3a7bd65444e5204c39239f8391316ca3d7b76d2e0"
       },
       "config": {
-        "remote_filename": null,
+        "remote_filename": "configs/gpt1.yaml",
         "local_path": "configs/gpt1.yaml",
-        "sha256": null
+        "sha256": "ab68622722091925e3ba86461a27832f9fae0efa9f8e244ff26b22dea72ab8eb"
       }
     }
   },
   "gpt2": {
-    "repo_id": null,
-    "revision": null,
+    "repo_id": "binod029/tiny-gpt",
+    "revision": "b6821b4095b927392276c643007588ee40244282",
     "artifacts": {
       "checkpoint": {
-        "remote_filename": null,
+        "remote_filename": "checkpoints/gpt2/gpt2_baseline.pt",
         "local_path": "checkpoints/gpt2/gpt2_baseline.pt",
-        "sha256": null
+        "sha256": "984b85010f88a1f8e47a14acfb1a0d2e9e12625b9fa79175b8b5ea18899d0b48"
       },
       "tokenizer": {
-        "remote_filename": null,
+        "remote_filename": "tokenizers/tokenizer.json",
         "local_path": "data/processed/tokenizer.json",
-        "sha256": null
+        "sha256": "d5d37c711f1617804e39dcf3a7bd65444e5204c39239f8391316ca3d7b76d2e0"
       },
       "config": {
-        "remote_filename": null,
+        "remote_filename": "configs/gpt2.yaml",
         "local_path": "configs/gpt2.yaml",
-        "sha256": null
+        "sha256": "ce5ef40ecd53fdb9dcf17a525165e5abac63fc0648e4f197c0a1ed5c1f2d919c"
       }
     }
   },
   "gpt3": {
-    "repo_id": null,
-    "revision": null,
+    "repo_id": "binod029/tiny-gpt",
+    "revision": "b6821b4095b927392276c643007588ee40244282",
     "artifacts": {
       "checkpoint": {
-        "remote_filename": null,
+        "remote_filename": "checkpoints/gpt3/gpt3_baseline.pt",
         "local_path": "checkpoints/gpt3/gpt3_baseline.pt",
-        "sha256": null
+        "sha256": "35d125f5936fd6fd72e0fd7a5fea2a72d44a34a5d88b17d1bb5c4870e54ba6ab"
       },
       "tokenizer": {
-        "remote_filename": null,
+        "remote_filename": "tokenizers/gpt3_tokenizer.json",
         "local_path": "data/processed/gpt3_tokenizer.json",
-        "sha256": null
+        "sha256": "7d090effc428ab13cda17621f9ea253319a86e1800656744874652e440fcb793"
       },
       "config": {
-        "remote_filename": null,
+        "remote_filename": "configs/gpt3.yaml",
         "local_path": "configs/gpt3.yaml",
-        "sha256": null
+        "sha256": "49c20cd47893a0ee596c2f3592813e146865a06eddff265ee754c0a6d5cd8ed8"
       }
     }
   }

@@ -570,15 +570,16 @@ class TestArtifactDownload(unittest.TestCase):
         for model in ["gpt1", "gpt2", "gpt3"]:
             self.assertIn(model, manifest)
             entry = manifest[model]
-            self.assertIsNone(entry["repo_id"])
-            self.assertIsNone(entry["revision"])
+            self.assertEqual(entry["repo_id"], "binod029/tiny-gpt")
+            self.assertEqual(entry["revision"], "b6821b4095b927392276c643007588ee40244282")
 
             artifacts = entry["artifacts"]
             for art_key in ["checkpoint", "tokenizer", "config"]:
                 self.assertIn(art_key, artifacts)
                 art = artifacts[art_key]
-                self.assertIsNone(art["remote_filename"])
-                self.assertIsNone(art["sha256"])
+                self.assertIsNotNone(art["remote_filename"])
+                self.assertIsNotNone(art["sha256"])
+                self.assertTrue(is_valid_sha256(art["sha256"]))
                 self.assertIsNotNone(art["local_path"])
 
         # Checkpoints must point to distinct paths
@@ -592,8 +593,22 @@ class TestArtifactDownload(unittest.TestCase):
         self.assertEqual(manifest["gpt3"]["artifacts"]["tokenizer"]["local_path"], "data/processed/gpt3_tokenizer.json")
 
     def test_cli_unconfigured_refusal(self):
-        """CLI refuses execution with returncode 1 when canonical manifest is unconfigured."""
-        cmd = [sys.executable, "scripts/download_model.py", "--model", "gpt1"]
+        """CLI refuses execution with returncode 1 when manifest has unconfigured repository ID."""
+        unconfigured_manifest = {
+            "gpt1": {
+                "repo_id": None,
+                "revision": None,
+                "artifacts": {
+                    "checkpoint": {
+                        "remote_filename": None,
+                        "local_path": "checkpoints/gpt1/gpt1_baseline.pt",
+                        "sha256": None,
+                    }
+                },
+            }
+        }
+        manifest_path = self._create_manifest(unconfigured_manifest)
+        cmd = [sys.executable, "scripts/download_model.py", "--model", "gpt1", "--manifest", manifest_path]
         result = subprocess.run(cmd, capture_output=True, text=True, cwd=self.project_root)
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("unconfigured repository ID", result.stderr)
