@@ -1,0 +1,9 @@
+{
+  "name": "e1_c",
+  "train_steps": 5000,
+  "elapsed_seconds": 272.99,
+  "final_train_loss": 3.6554,
+  "final_val_loss": 3.8222,
+  "min_val_loss": 3.6037,
+  "checkpoint_path": "checkpoints/gpt4/e1_depth/e1_c\\e1_c_baseline.pt"
+}

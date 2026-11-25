@@ -1,0 +1,33 @@
+experiment:
+  name: sweep_small
+  description: "GPT-5 Sweep 1: 4L D=128 T=128 V=2048 lr=6e-4 cosine"
+  family: gpt5_sweep
+
+model:
+  vocab_size: 2048
+  embedding_dim: 128
+  max_context_length: 128
+  num_heads: 4
+  feed_forward_dim: 512
+  num_layers: 4
+
+training:
+  batch_size: 32
+  learning_rate: 6.0e-4
+  lr_schedule: cosine
+  warmup_steps: 200
+  min_lr_ratio: 0.1
+  grad_clip: 1.0
+  train_steps: 4000
+  val_interval: 250
+  seed: 42
+
+data:
+  tokenizer_path: data/gpt5/gpt5_tokenizer.json
+  tokenizer_type: subword
+  data_dir: data/gpt5_sweep
+
+paths:
+  checkpoint_dir: checkpoints/gpt5/sweep_small
+  results_dir: experiments/gpt5/results
+

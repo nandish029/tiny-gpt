@@ -365,6 +365,12 @@ class ExperimentRunner:
         train_steps = steps if steps is not None else self.training_cfg.get("train_steps", 5000)
         val_interval = self.training_cfg.get("val_interval", 100)
         batch_size = self.training_cfg.get("batch_size", 16)
+        lr_schedule = self.training_cfg.get("lr_schedule", "constant")
+        warmup_steps = int(self.training_cfg.get("warmup_steps", 0))
+        min_lr_ratio = float(self.training_cfg.get("min_lr_ratio", 0.1))
+        grad_clip = self.training_cfg.get("grad_clip", None)
+        if grad_clip is not None:
+            grad_clip = float(grad_clip)
 
         optimizer = create_optimizer(self.model, learning_rate=learning_rate)
 
@@ -380,9 +386,20 @@ class ExperimentRunner:
         history = []
 
         for step in range(start_step + 1, train_steps + 1):
+            if lr_schedule == "cosine":
+                if warmup_steps > 0 and step <= warmup_steps:
+                    lr = learning_rate * (step / warmup_steps)
+                else:
+                    progress = (step - warmup_steps) / max(1, train_steps - warmup_steps)
+                    progress = min(1.0, max(0.0, progress))
+                    cosine_decay = 0.5 * (1.0 + math.cos(math.pi * progress))
+                    lr = learning_rate * (min_lr_ratio + (1.0 - min_lr_ratio) * cosine_decay)
+                for pg in optimizer.param_groups:
+                    pg["lr"] = lr
+
             x, y = self.dataset.get_batch(split="train", batch_size=batch_size, generator=self.train_generator)
             x, y = x.to(self.device), y.to(self.device)
-            loss = train_step(self.model, optimizer, x, y)
+            loss = train_step(self.model, optimizer, x, y, max_grad_norm=grad_clip)
 
             if step % val_interval == 0 or step == train_steps:
                 val_x, val_y = self.dataset.get_batch(split="val", batch_size=batch_size, generator=self.val_generator)

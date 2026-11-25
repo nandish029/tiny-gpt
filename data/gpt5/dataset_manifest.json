@@ -1,0 +1,44 @@
+{
+  "dataset": "roneneldan/TinyStories",
+  "version": "0.0.0",
+  "seed": 42,
+  "tokenizer_path": "data/processed/gpt3_tokenizer.json",
+  "tokenizer_vocab_size": 512,
+  "excluded_existing_val_path": "data/processed/val.jsonl",
+  "excluded_existing_val_docs": 500,
+  "preprocessing": [
+    "Skip empty/whitespace-only texts",
+    "Normalize whitespace via ' '.join(text.split())",
+    "Deduplicate exact normalized texts",
+    "Exclude all documents present in data/processed/val.jsonl",
+    "Deterministic shuffle with seed"
+  ],
+  "train": {
+    "source_split": "train",
+    "path": "data/gpt5\\train.jsonl",
+    "file_size_bytes": 90168544,
+    "sha256": "e4a9950874bc516f1de3251cfb2d745a503a338ea9ca4d467f0c60bb073354ec",
+    "skipped_empty": 17,
+    "skipped_duplicate_or_excluded": 1500,
+    "document_count": 100000,
+    "char_count": 87981982,
+    "token_count": 30482584,
+    "unk_token_id": 0,
+    "unk_token_count": 120,
+    "unk_token_rate": 4e-06
+  },
+  "val": {
+    "source_split": "validation",
+    "path": "data/gpt5\\val.jsonl",
+    "file_size_bytes": 1623662,
+    "sha256": "2cebdb94fd8f01dedd48a0733997b3dce7186e85c507ff3dda89bb98f399cde4",
+    "skipped_empty": 0,
+    "skipped_duplicate_or_excluded": 0,
+    "document_count": 2000,
+    "char_count": 1585337,
+    "token_count": 542443,
+    "unk_token_id": 0,
+    "unk_token_count": 3,
+    "unk_token_rate": 6e-06
+  }
+}

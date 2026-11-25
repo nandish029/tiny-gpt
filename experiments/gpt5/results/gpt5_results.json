@@ -1,0 +1,9 @@
+{
+  "name": "gpt5",
+  "train_steps": 10000,
+  "elapsed_seconds": 612.84,
+  "final_train_loss": 3.6905,
+  "final_val_loss": 3.5478,
+  "min_val_loss": 3.4154,
+  "checkpoint_path": "checkpoints/gpt5\\gpt5_baseline.pt"
+}

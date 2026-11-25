@@ -1,5 +1,6 @@
-import torch
 import os
+import numpy as np
+import torch
 from src.data.dataset import TinyStoriesDataset
 from src.utils.device import get_device
 
@@ -14,7 +15,11 @@ class LanguageDataset:
         
 
     def _load_and_encode(self, split, data_dir):
-        """Loads dataset split and encodes it into a 1D tensor of IDs."""
+        """Loads pre-tokenized uint16 .bin memmap if present, else encodes split JSONL."""
+        bin_path = os.path.join(data_dir, f"{split}.bin")
+        if os.path.isfile(bin_path):
+            return np.memmap(bin_path, dtype=np.uint16, mode="r")
+
         ds = TinyStoriesDataset(split=split, data_dir=data_dir)
         # Join all stories. Using space is simple and effective.
         all_text = " ".join(ds.stories)
@@ -53,8 +58,18 @@ class LanguageDataset:
         else:
             ix = torch.randint(0, max_idx, (batch_size,))
         
-        # Extract sequences
-        x = torch.stack([data[i : i + self.context_length] for i in ix])
-        y = torch.stack([data[i + 1 : i + self.context_length + 1] for i in ix])
+        # Extract sequences (supports both torch.Tensor and numpy.memmap)
+        if isinstance(data, np.memmap):
+            x = torch.stack([
+                torch.from_numpy(np.asarray(data[int(i) : int(i) + self.context_length], dtype=np.int64))
+                for i in ix
+            ])
+            y = torch.stack([
+                torch.from_numpy(np.asarray(data[int(i) + 1 : int(i) + self.context_length + 1], dtype=np.int64))
+                for i in ix
+            ])
+        else:
+            x = torch.stack([data[i : i + self.context_length] for i in ix])
+            y = torch.stack([data[i + 1 : i + self.context_length + 1] for i in ix])
         
         return x.to(self.device), y.to(self.device)

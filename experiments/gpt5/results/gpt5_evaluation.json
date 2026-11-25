@@ -1,0 +1,46 @@
+{
+  "comparison_protocol": {
+    "tokenizer": "data/processed/gpt3_tokenizer.json",
+    "tokenizer_type": "subword",
+    "vocab_size": 512,
+    "batch_size": 16,
+    "context_length": 64,
+    "batch_count": 50,
+    "tokens_evaluated": 51200,
+    "eval_seed": 10042,
+    "evaluation_mode": "sampled"
+  },
+  "shared_tinystories_val": {
+    "data_dir": "data/processed",
+    "val_file": "data/processed/val.jsonl",
+    "gpt4_e1_c": {
+      "checkpoint": "checkpoints/gpt4/e1_depth/e1_c/e1_c_baseline.pt",
+      "train_docs": 4500,
+      "train_steps": 5000,
+      "token_exposure": 5120000,
+      "loss": 3.7625,
+      "perplexity": 43.0553
+    },
+    "gpt5": {
+      "checkpoint": "checkpoints/gpt5/gpt5_baseline.pt",
+      "train_docs": 100000,
+      "train_steps": 10000,
+      "token_exposure": 10240000,
+      "loss": 3.5531,
+      "perplexity": 34.9209
+    }
+  },
+  "gpt5_heldout_val": {
+    "data_dir": "data/gpt5",
+    "val_file": "data/gpt5/val.jsonl",
+    "gpt4_e1_c": {
+      "loss": 3.7074,
+      "perplexity": 40.7472
+    },
+    "gpt5": {
+      "loss": 3.5084,
+      "perplexity": 33.3946
+    }
+  }
+}
+
