@@ -1,7 +1,9 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from typing import Tuple
 import math
+from src.model.positional_embeddings import RotaryEmbedding, apply_rotary_pos_emb
 
 class QKVProjections(nn.Module):
     """
@@ -72,7 +74,14 @@ class MultiHeadSelfAttention(nn.Module):
     """
     Multi-head self-attention module for GPT.
     """
-    def __init__(self, embedding_dim: int, num_heads: int, causal: bool = True):
+    def __init__(
+        self,
+        embedding_dim: int,
+        num_heads: int,
+        causal: bool = True,
+        pos_encoding: str = "learned",
+        max_context_length: int = 128,
+    ):
         super().__init__()
         if num_heads <= 0:
             raise ValueError(f"num_heads must be > 0, got {num_heads}")
@@ -85,10 +94,16 @@ class MultiHeadSelfAttention(nn.Module):
         self.num_heads = num_heads
         self.head_dim = embedding_dim // num_heads
         self.causal = causal
+        self.pos_encoding = pos_encoding
         
         self.qkv_proj = QKVProjections(embedding_dim)
         self.attention = ScaledDotProductAttention()
         self.out_proj = nn.Linear(embedding_dim, embedding_dim)
+        self.rope = (
+            RotaryEmbedding(self.head_dim, max_context_length)
+            if pos_encoding == "rope"
+            else None
+        )
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """
@@ -106,9 +121,14 @@ class MultiHeadSelfAttention(nn.Module):
         q = q.view(B, T, self.num_heads, self.head_dim).transpose(1, 2)
         k = k.view(B, T, self.num_heads, self.head_dim).transpose(1, 2)
         v = v.view(B, T, self.num_heads, self.head_dim).transpose(1, 2)
-        
-        # 3 & 4. Scaled dot-product attention
-        out, _ = self.attention(q, k, v, causal=self.causal)
+
+        if self.rope is not None:
+            cos, sin = self.rope(T, q.dtype, q.device)
+            q, k = apply_rotary_pos_emb(q, k, cos, sin)
+            out = F.scaled_dot_product_attention(q, k, v, is_causal=self.causal)
+        else:
+            # 3 & 4. Scaled dot-product attention
+            out, _ = self.attention(q, k, v, causal=self.causal)
         
         # 5. Concatenate heads back to [B, T, D]
         out = out.transpose(1, 2).contiguous().view(B, T, D)

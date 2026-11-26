@@ -1,0 +1,40 @@
+experiment:
+  name: gpt6_full
+  description: "GPT-6 Final: 8L D=384 RMSNorm + SwiGLU + RoPE + TiedWeights on 200M-token FineWeb-Edu"
+  family: gpt6
+
+model:
+  vocab_size: 8192
+  embedding_dim: 384
+  max_context_length: 256
+  num_heads: 6
+  feed_forward_dim: 1024
+  num_layers: 8
+  norm_type: rmsnorm
+  ffn_type: swiglu
+  pos_encoding: rope
+  tie_weights: true
+
+training:
+  batch_size: 32
+  learning_rate: 6.0e-4
+  lr_schedule: cosine
+  warmup_steps: 500
+  min_lr_ratio: 0.1
+  grad_clip: 1.0
+  use_amp: true
+  checkpoint_interval: 1000
+  auto_resume: true
+  train_steps: 25000
+  val_interval: 500
+  seed: 42
+
+data:
+  tokenizer_path: data/fineweb_edu/fineweb_bpe_8192.json
+  tokenizer_type: subword
+  data_dir: data/fineweb_edu
+
+paths:
+  checkpoint_dir: checkpoints/gpt6_full
+  results_dir: experiments/gpt6/results
+

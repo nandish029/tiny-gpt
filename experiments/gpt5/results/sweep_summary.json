@@ -1,0 +1,42 @@
+[
+  {
+    "name": "sweep_small",
+    "params": 1336064,
+    "elapsed_s": 78.38,
+    "final_train_loss": 3.0076,
+    "min_val_loss": 3.0103,
+    "eval_loss": 3.0689,
+    "eval_ppl": 21.5185,
+    "sample": "Once upon a time , there was a little boy named Tim . He had a big dog named Tim . Tim had an idea . He wanted to climb the house . He even a game but his mom said he would not"
+  },
+  {
+    "name": "sweep_medium",
+    "params": 3482624,
+    "elapsed_s": 193.94,
+    "final_train_loss": 2.5932,
+    "min_val_loss": 2.5662,
+    "eval_loss": 2.6255,
+    "eval_ppl": 13.8116,
+    "sample": "Once upon a time , there was a little boy named Tim . He had a very special quest ion . He could only get it . The little boy got sad and went back to his mom . He used his teeth to"
+  },
+  {
+    "name": "sweep_medium_lr3e4",
+    "params": 3482624,
+    "elapsed_s": 193.53,
+    "final_train_loss": 2.9351,
+    "min_val_loss": 2.9031,
+    "eval_loss": 2.9735,
+    "eval_ppl": 19.5597,
+    "sample": "Once upon a time there was a little girl named Lily . She loved to play outside in the farm . One day , she went to the room to visit her mommy for a long time . Lily saw a big smile on"
+  },
+  {
+    "name": "sweep_ctx256",
+    "params": 3507200,
+    "elapsed_s": 463.64,
+    "final_train_loss": 2.5404,
+    "min_val_loss": 2.5849,
+    "eval_loss": 2.6045,
+    "eval_ppl": 13.5244,
+    "sample": "Once upon a time , there was a little boy named Tim . He had a very special quest ion . He could only even better . But then , Tim heard a voice . \" What does birds happen ing ,\" he said"
+  }
+]

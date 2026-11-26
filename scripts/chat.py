@@ -21,6 +21,9 @@ def parse_args():
     parser.add_argument("--prompt", type=str, default=None, help="Optional prompt for one-shot generation. If omitted, enters interactive mode.")
     parser.add_argument("--temperature", type=float, default=0.8, help="Generation temperature (must be > 0.0)")
     parser.add_argument("--max-new-tokens", type=int, default=200, dest="max_new_tokens", help="Maximum number of tokens to generate (must be > 0)")
+    parser.add_argument("--top-k", type=int, default=0, dest="top_k", help="Top-k sampling (0 disables)")
+    parser.add_argument("--top-p", type=float, default=1.0, dest="top_p", help="Nucleus top-p sampling (1.0 disables)")
+    parser.add_argument("--repetition-penalty", type=float, default=1.0, dest="repetition_penalty", help="Repetition penalty (1.0 disables)")
     parser.add_argument("--seed", type=int, default=42, help="Random seed for deterministic generation")
     return parser.parse_args()
 
@@ -70,7 +73,10 @@ def main():
     validate_architecture(model_config, checkpoint_config)
     
     # 5. Construct Model
-    model = GPT(**model_config).to(device)
+    model_kwargs = {
+        k: v for k, v in model_config.items()
+    }
+    model = GPT(**model_kwargs).to(device)
     model.load_state_dict(checkpoint['model_state_dict'])
     model.eval()
     print("Model loaded successfully.")
@@ -92,7 +98,10 @@ def main():
                 args.prompt, 
                 max_new_tokens=args.max_new_tokens, 
                 temperature=args.temperature,
-                generator=generator
+                generator=generator,
+                top_k=args.top_k,
+                top_p=args.top_p,
+                repetition_penalty=args.repetition_penalty,
             )
         print(output)
     else:
@@ -125,7 +134,10 @@ def main():
                         user_input,
                         max_new_tokens=args.max_new_tokens,
                         temperature=args.temperature,
-                        generator=generator
+                        generator=generator,
+                        top_k=args.top_k,
+                        top_p=args.top_p,
+                        repetition_penalty=args.repetition_penalty,
                     )
                 print(f"GPT: {output}")
             except KeyboardInterrupt:

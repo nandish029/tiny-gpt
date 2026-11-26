@@ -114,7 +114,7 @@ class ExperimentRunner:
 
     def get_model_dimensions(self) -> Dict[str, Any]:
         """Return model dimensional hyperparameters."""
-        return {
+        dims = {
             "vocab_size": self.model_cfg.get("vocab_size"),
             "embedding_dim": self.model_cfg.get("embedding_dim"),
             "max_context_length": self.model_cfg.get("max_context_length"),
@@ -122,6 +122,10 @@ class ExperimentRunner:
             "feed_forward_dim": self.model_cfg.get("feed_forward_dim"),
             "num_layers": self.model_cfg.get("num_layers"),
         }
+        for opt_k in ("norm_type", "ffn_type", "pos_encoding", "tie_weights"):
+            if opt_k in self.model_cfg:
+                dims[opt_k] = self.model_cfg[opt_k]
+        return dims
 
     def estimate_memory(self, batch_size: Optional[int] = None) -> Dict[str, Any]:
         """
@@ -353,9 +357,13 @@ class ExperimentRunner:
             self.load_tokenizer_and_dataset()
 
         if os.path.exists(self.checkpoint_path) and not overwrite and not resume_from:
-            raise FileExistsError(
-                f"Checkpoint {self.checkpoint_path} already exists. Set overwrite=True or resume_from to proceed."
-            )
+            auto_resume = bool(self.training_cfg.get("auto_resume", False))
+            if auto_resume:
+                resume_from = self.checkpoint_path
+            else:
+                raise FileExistsError(
+                    f"Checkpoint {self.checkpoint_path} already exists. Set overwrite=True or resume_from to proceed."
+                )
 
         # Independent Generators for training and validation
         self.train_generator = torch.Generator().manual_seed(self.seed)
@@ -371,6 +379,9 @@ class ExperimentRunner:
         grad_clip = self.training_cfg.get("grad_clip", None)
         if grad_clip is not None:
             grad_clip = float(grad_clip)
+        checkpoint_interval = int(self.training_cfg.get("checkpoint_interval", 0))
+        use_amp = bool(self.training_cfg.get("use_amp", False)) and (self.device.type == "cuda")
+        scaler = torch.amp.GradScaler("cuda") if use_amp else None
 
         optimizer = create_optimizer(self.model, learning_rate=learning_rate)
 
@@ -379,7 +390,24 @@ class ExperimentRunner:
             ckpt = torch.load(resume_from, map_location=self.device, weights_only=False)
             self.model.load_state_dict(ckpt["model_state_dict"])
             optimizer.load_state_dict(ckpt["optimizer_state_dict"])
+            if scaler is not None and "scaler_state_dict" in ckpt and ckpt["scaler_state_dict"] is not None:
+                scaler.load_state_dict(ckpt["scaler_state_dict"])
             start_step = ckpt.get("step", 0)
+
+        def _save_ckpt(step_num: int):
+            os.makedirs(self.checkpoint_dir, exist_ok=True)
+            payload = {
+                "model_state_dict": self.model.state_dict(),
+                "optimizer_state_dict": optimizer.state_dict(),
+                "step": step_num,
+                "config": {
+                    "tokenizer_type": self.data_cfg.get("tokenizer_type", "subword"),
+                    **self.model_cfg,
+                },
+            }
+            if scaler is not None:
+                payload["scaler_state_dict"] = scaler.state_dict()
+            torch.save(payload, self.checkpoint_path)
 
         start_time = time.time()
         min_val_loss = float("inf")
@@ -399,7 +427,21 @@ class ExperimentRunner:
 
             x, y = self.dataset.get_batch(split="train", batch_size=batch_size, generator=self.train_generator)
             x, y = x.to(self.device), y.to(self.device)
-            loss = train_step(self.model, optimizer, x, y, max_grad_norm=grad_clip)
+            if use_amp:
+                from src.training.loss import language_model_loss
+                self.model.train()
+                optimizer.zero_grad()
+                with torch.amp.autocast("cuda", dtype=torch.float16):
+                    logits = self.model(x)
+                    loss = language_model_loss(logits, y)
+                scaler.scale(loss).backward()
+                if grad_clip is not None:
+                    scaler.unscale_(optimizer)
+                    torch.nn.utils.clip_grad_norm_(self.model.parameters(), grad_clip)
+                scaler.step(optimizer)
+                scaler.update()
+            else:
+                loss = train_step(self.model, optimizer, x, y, max_grad_norm=grad_clip)
 
             if step % val_interval == 0 or step == train_steps:
                 val_x, val_y = self.dataset.get_batch(split="val", batch_size=batch_size, generator=self.val_generator)
@@ -415,19 +457,13 @@ class ExperimentRunner:
                     "val_loss": round(val_val, 4)
                 })
 
+            if checkpoint_interval > 0 and step % checkpoint_interval == 0 and step < train_steps:
+                _save_ckpt(step)
+
         elapsed = time.time() - start_time
 
-        # Save checkpoint
-        os.makedirs(self.checkpoint_dir, exist_ok=True)
-        torch.save({
-            "model_state_dict": self.model.state_dict(),
-            "optimizer_state_dict": optimizer.state_dict(),
-            "step": train_steps,
-            "config": {
-                "tokenizer_type": self.data_cfg.get("tokenizer_type", "subword"),
-                **self.model_cfg
-            }
-        }, self.checkpoint_path)
+        # Save final checkpoint
+        _save_ckpt(train_steps)
 
         self.checkpoint_loaded = True
         self.loaded_checkpoint_path = self.checkpoint_path

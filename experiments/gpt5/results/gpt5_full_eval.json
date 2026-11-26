@@ -1,0 +1,27 @@
+{
+  "train": {
+    "name": "gpt5_full",
+    "train_steps": 30000,
+    "elapsed_seconds": 1454.67,
+    "final_train_loss": 2.0351,
+    "final_val_loss": 1.9296,
+    "min_val_loss": 1.8855,
+    "checkpoint_path": "checkpoints/gpt5_full/gpt5_full_baseline.pt"
+  },
+  "eval": {
+    "experiment": "gpt5_full",
+    "split": "val",
+    "batch_count": 100,
+    "batch_size": 32,
+    "tokens_evaluated": 409600,
+    "loss": 1.9689,
+    "perplexity": 7.1628,
+    "eval_seed": 10042,
+    "checkpoint_evaluated": "checkpoints/gpt5_full/gpt5_full_baseline.pt"
+  },
+  "samples": {
+    "Once upon a time": "Once upon a time , there was a little boy named Timmy . Timmy loved to play with his toy cars and truck s . One day , he saw a blue car zoom ing in the road . He wanted to play with it , but he was too small . Timmy ' s mom said , \" Timmy , let ' s go to the store and get some more car rots . You can play with your cars now .\" While",
+    "The magic": "The magic ian told her that if you mar ry me to help you . She said that if you mar ry me , you can do it .\" Max agreed and they started mar ry ing the magic ian ' s work . The letter was in the sky and it was the most wonderful thing they had ever seen . The moral of this story is that if you ever d are kind and su pp ort ive , you",
+    "One day, ": "One day , he told her that she was going to be to y ield her things . Her fa ther said that even people can bring something special for her . He told her that she needed to be have and not have money . The little girl was sad to see her fa ther lo ad s away , so she decided to make his own ers . She went to the store and started to buy food . She was"
+  }
+}

@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 class FeedForward(nn.Module):
     """
@@ -26,3 +27,16 @@ class FeedForward(nn.Module):
         x = self.act(x)
         x = self.linear2(x)
         return x
+
+
+class SwiGLU(nn.Module):
+    """SwiGLU gated feed-forward network (Llama-style, bias=False)."""
+
+    def __init__(self, embedding_dim: int, feed_forward_dim: int):
+        super().__init__()
+        self.w1 = nn.Linear(embedding_dim, feed_forward_dim, bias=False)
+        self.w3 = nn.Linear(embedding_dim, feed_forward_dim, bias=False)
+        self.w2 = nn.Linear(feed_forward_dim, embedding_dim, bias=False)
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        return self.w2(F.silu(self.w1(x)) * self.w3(x))

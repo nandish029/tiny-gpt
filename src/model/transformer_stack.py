@@ -6,7 +6,17 @@ class TransformerStack(nn.Module):
     """
     A configurable stack of TransformerBlock modules.
     """
-    def __init__(self, embedding_dim: int, num_heads: int, feed_forward_dim: int, num_layers: int):
+    def __init__(
+        self,
+        embedding_dim: int,
+        num_heads: int,
+        feed_forward_dim: int,
+        num_layers: int,
+        norm_type: str = "layernorm",
+        ffn_type: str = "gelu",
+        pos_encoding: str = "learned",
+        max_context_length: int = 128,
+    ):
         super().__init__()
         
         if num_layers <= 0:
@@ -21,7 +31,15 @@ class TransformerStack(nn.Module):
             raise ValueError(f"embedding_dim ({embedding_dim}) must be divisible by num_heads ({num_heads})")
         
         self.blocks = nn.ModuleList([
-            TransformerBlock(embedding_dim, num_heads, feed_forward_dim)
+            TransformerBlock(
+                embedding_dim,
+                num_heads,
+                feed_forward_dim,
+                norm_type=norm_type,
+                ffn_type=ffn_type,
+                pos_encoding=pos_encoding,
+                max_context_length=max_context_length,
+            )
             for _ in range(num_layers)
         ])
 

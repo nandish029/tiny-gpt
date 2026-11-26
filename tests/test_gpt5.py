@@ -92,6 +92,31 @@ class TestGPT5(unittest.TestCase):
             info = manifest[name]["artifacts"]["checkpoint"]
             self.assertEqual(sha256_file(info["local_path"]), info["sha256"])
 
+    def test_gpt5_full_checkpoint_and_config(self):
+        full_cfg = "experiments/gpt5/configs/gpt5_full_run.yaml"
+        full_ckpt = "checkpoints/gpt5_full/gpt5_full_baseline.pt"
+        full_manifest = "data/gpt5_full/dataset_manifest.json"
+        self.assertTrue(os.path.isfile(full_cfg))
+        self.assertTrue(os.path.isfile(full_ckpt))
+        self.assertTrue(os.path.isfile(full_manifest))
+
+        ckpt = torch.load(full_ckpt, map_location="cpu", weights_only=False)
+        self.assertEqual(ckpt["step"], 30000)
+        cfg = ckpt["config"]
+        self.assertEqual(cfg["num_layers"], 6)
+        self.assertEqual(cfg["embedding_dim"], 192)
+        self.assertEqual(cfg["max_context_length"], 128)
+        self.assertEqual(cfg["vocab_size"], 2048)
+
+        model_cfg = {k: v for k, v in cfg.items() if k != "tokenizer_type"}
+        model = GPT(**model_cfg)
+        res = model.load_state_dict(ckpt["model_state_dict"], strict=True)
+        self.assertEqual(len(res.missing_keys), 0)
+        self.assertEqual(len(res.unexpected_keys), 0)
+        self.assertEqual(sum(p.numel() for p in model.parameters() if p.requires_grad), 3482624)
+        for p in model.parameters():
+            self.assertTrue(torch.all(torch.isfinite(p)).item())
+
 
 if __name__ == "__main__":
     unittest.main()

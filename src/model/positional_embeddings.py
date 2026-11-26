@@ -38,3 +38,39 @@ class PositionalEmbedding(nn.Module):
         
         # Look up positional embeddings: shape becomes [B, T, embedding_dim]
         return self.embedding(positions)
+
+
+def _rotate_half(x: torch.Tensor) -> torch.Tensor:
+    half = x.shape[-1] // 2
+    x1 = x[..., :half]
+    x2 = x[..., half:]
+    return torch.cat((-x2, x1), dim=-1)
+
+
+def apply_rotary_pos_emb(
+    q: torch.Tensor, k: torch.Tensor, cos: torch.Tensor, sin: torch.Tensor
+):
+    """Apply rotary position embeddings to Q and K of shape [B, H, T, head_dim]."""
+    q_rot = (q * cos) + (_rotate_half(q) * sin)
+    k_rot = (k * cos) + (_rotate_half(k) * sin)
+    return q_rot, k_rot
+
+
+class RotaryEmbedding(nn.Module):
+    """Precomputed Rotary Position Embedding (RoPE) cosines and sines."""
+
+    def __init__(self, head_dim: int, max_context_length: int, base: float = 10000.0):
+        super().__init__()
+        if head_dim % 2 != 0:
+            raise ValueError(f"RoPE requires even head_dim, got {head_dim}")
+        inv_freq = 1.0 / (base ** (torch.arange(0, head_dim, 2).float() / head_dim))
+        t = torch.arange(max_context_length, dtype=torch.float32)
+        freqs = torch.outer(t, inv_freq)
+        emb = torch.cat((freqs, freqs), dim=-1)
+        self.register_buffer("cos_cached", emb.cos()[None, None, :, :], persistent=False)
+        self.register_buffer("sin_cached", emb.sin()[None, None, :, :], persistent=False)
+
+    def forward(self, seq_len: int, dtype: torch.dtype, device: torch.device):
+        cos = self.cos_cached[:, :, :seq_len, :].to(device=device, dtype=dtype)
+        sin = self.sin_cached[:, :, :seq_len, :].to(device=device, dtype=dtype)
+        return cos, sin

@@ -6,9 +6,9 @@ class LanguageModelHead(nn.Module):
     Language model output head.
     Projects the final hidden representation to vocabulary logits.
     """
-    def __init__(self, embedding_dim: int, vocab_size: int):
+    def __init__(self, embedding_dim: int, vocab_size: int, bias: bool = True):
         super().__init__()
-        self.linear = nn.Linear(embedding_dim, vocab_size)
+        self.linear = nn.Linear(embedding_dim, vocab_size, bias=bias)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         """

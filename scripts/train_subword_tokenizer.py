@@ -5,6 +5,7 @@ import json
 
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from src.tokenizer.factory import get_tokenizer
+from src.tokenizer.subword import SubwordTokenizer
 
 def text_generator(filepath):
     if not os.path.exists(filepath):
@@ -25,10 +26,11 @@ def main():
     parser.add_argument("--data", type=str, default="data/processed/train.jsonl")
     parser.add_argument("--out", type=str, default="data/processed/gpt3_tokenizer.json")
     parser.add_argument("--vocab_size", type=int, default=512)
+    parser.add_argument("--byte_level", action="store_true", help="Use modern Byte-Level BPE")
     args = parser.parse_args()
 
-    print(f"Initializing subword tokenizer (target vocab size: {args.vocab_size})...")
-    tokenizer = get_tokenizer("subword")
+    print(f"Initializing subword tokenizer (vocab={args.vocab_size}, byte_level={args.byte_level})...")
+    tokenizer = SubwordTokenizer(byte_level=args.byte_level) if args.byte_level else get_tokenizer("subword")
     
     print(f"Training tokenizer on {args.data}...")
     tokenizer.build_vocab(text_generator(args.data), vocab_size=args.vocab_size)

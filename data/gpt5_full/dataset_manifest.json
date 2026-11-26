@@ -1,0 +1,34 @@
+{
+  "dataset": "roneneldan/TinyStories",
+  "version": "0.0.0",
+  "seed": 42,
+  "format": "uint16_bin",
+  "tokenizer_path": "data/gpt5/gpt5_tokenizer.json",
+  "tokenizer_vocab_size": 2048,
+  "excluded_existing_val_path": "data/processed/val.jsonl",
+  "excluded_existing_val_docs": 0,
+  "train": {
+    "source_split": "train",
+    "path": "data/gpt5_full/train.bin",
+    "file_size_bytes": 990128818,
+    "document_count": 2119489,
+    "token_count": 495064409,
+    "unk_token_id": 0,
+    "unk_token_count": 887,
+    "unk_token_rate": 2e-06,
+    "skipped_empty": 230,
+    "skipped_duplicate_or_excluded": 0
+  },
+  "val": {
+    "source_split": "validation",
+    "path": "data/gpt5_full/val.bin",
+    "file_size_bytes": 9965898,
+    "document_count": 21990,
+    "token_count": 4982949,
+    "unk_token_id": 0,
+    "unk_token_count": 4,
+    "unk_token_rate": 1e-06,
+    "skipped_empty": 0,
+    "skipped_duplicate_or_excluded": 0
+  }
+}

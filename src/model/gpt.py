@@ -18,6 +18,10 @@ class GPT(nn.Module):
         num_heads: int,
         feed_forward_dim: int,
         num_layers: int,
+        norm_type: str = "layernorm",
+        ffn_type: str = "gelu",
+        pos_encoding: str = "learned",
+        tie_weights: bool = False,
     ):
         super().__init__()
         self.vocab_size = vocab_size
@@ -26,11 +30,28 @@ class GPT(nn.Module):
         self.num_heads = num_heads
         self.feed_forward_dim = feed_forward_dim
         self.num_layers = num_layers
+        self.norm_type = norm_type
+        self.ffn_type = ffn_type
+        self.pos_encoding = pos_encoding
+        self.tie_weights = tie_weights
 
-        self.embedding = GPTInputEmbedding(vocab_size, embedding_dim, max_context_length)
-        self.transformer_stack = TransformerStack(embedding_dim, num_heads, feed_forward_dim, num_layers)
-        self.final_norm = FinalLayerNorm(embedding_dim)
-        self.lm_head = LanguageModelHead(embedding_dim, vocab_size)
+        self.embedding = GPTInputEmbedding(
+            vocab_size, embedding_dim, max_context_length, pos_encoding=pos_encoding
+        )
+        self.transformer_stack = TransformerStack(
+            embedding_dim,
+            num_heads,
+            feed_forward_dim,
+            num_layers,
+            norm_type=norm_type,
+            ffn_type=ffn_type,
+            pos_encoding=pos_encoding,
+            max_context_length=max_context_length,
+        )
+        self.final_norm = FinalLayerNorm(embedding_dim, norm_type=norm_type)
+        self.lm_head = LanguageModelHead(embedding_dim, vocab_size, bias=not tie_weights)
+        if tie_weights:
+            self.lm_head.linear.weight = self.embedding.token_embedding.embedding.weight
 
     def forward(self, input_ids: torch.Tensor) -> torch.Tensor:
         """

@@ -7,14 +7,25 @@ class GPTInputEmbedding(nn.Module):
     """
     Combined token and positional embedding layer for GPT.
     """
-    def __init__(self, vocab_size: int, embedding_dim: int, max_context_length: int):
+    def __init__(
+        self,
+        vocab_size: int,
+        embedding_dim: int,
+        max_context_length: int,
+        pos_encoding: str = "learned",
+    ):
         super().__init__()
         self.vocab_size = vocab_size
         self.embedding_dim = embedding_dim
         self.max_context_length = max_context_length
+        self.pos_encoding = pos_encoding
         
         self.token_embedding = TokenEmbedding(vocab_size, embedding_dim)
-        self.positional_embedding = PositionalEmbedding(max_context_length, embedding_dim)
+        self.positional_embedding = (
+            PositionalEmbedding(max_context_length, embedding_dim)
+            if pos_encoding == "learned"
+            else None
+        )
 
     def forward(self, token_ids: torch.Tensor) -> torch.Tensor:
         """
@@ -31,6 +42,8 @@ class GPTInputEmbedding(nn.Module):
             raise ValueError(f"Sequence length {T} exceeds max_context_length {self.max_context_length}")
             
         token_emb = self.token_embedding(token_ids)
+        if self.positional_embedding is None:
+            return token_emb
         pos_emb = self.positional_embedding(token_ids)
         
         return token_emb + pos_emb
