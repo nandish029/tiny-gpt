@@ -1,3 +1,4 @@
+import math
 import torch
 import torch.nn as nn
 from src.model.gpt_embeddings import GPTInputEmbedding
@@ -51,7 +52,22 @@ class GPT(nn.Module):
         self.final_norm = FinalLayerNorm(embedding_dim, norm_type=norm_type)
         self.lm_head = LanguageModelHead(embedding_dim, vocab_size, bias=not tie_weights)
         if tie_weights:
+            self.apply(self._init_tied_weights)
+            # Re-scale residual output projections (GPT-2 / Llama style)
+            res_std = 0.02 / math.sqrt(2 * num_layers)
+            for name, p in self.named_parameters():
+                if name.endswith(("out_proj.weight", "w2.weight", "linear2.weight")):
+                    nn.init.normal_(p, mean=0.0, std=res_std)
             self.lm_head.linear.weight = self.embedding.token_embedding.embedding.weight
+
+    @staticmethod
+    def _init_tied_weights(module: nn.Module):
+        if isinstance(module, nn.Linear):
+            nn.init.normal_(module.weight, mean=0.0, std=0.02)
+            if module.bias is not None:
+                nn.init.zeros_(module.bias)
+        elif isinstance(module, nn.Embedding):
+            nn.init.normal_(module.weight, mean=0.0, std=0.02)
 
     def forward(self, input_ids: torch.Tensor) -> torch.Tensor:
         """
